@@ -1,0 +1,13 @@
+Package: lifetime
+Type: Package
+Title: Provide functions for lifetime pricing
+Version: 1.0
+Author: Dan Kary
+Maintainer: The package maintainer <dan@southwickassociates.com>
+Description: This packages was based on the NC project from late 2019, including
+    functions for producing final analysis, as well as functions for evaluating
+    altermative methods; in particular for estimating counterfactual years of
+    license purchases (years by age, retention, logistic model retention)
+License: Southwick Associates only
+Encoding: UTF-8
+LazyData: false
