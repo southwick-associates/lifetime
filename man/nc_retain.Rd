@@ -10,7 +10,7 @@ nc_retain(retain_all)
 nc_retain_all(history_split, ages)
 }
 \arguments{
-\item{retain_all}{full set of retention curve results produced by 
+\item{retain_all}{full set of retention curve results produced by
 nc_retain_all()}
 
 \item{history_split}{license history list produced by yrs_zero_split()}
@@ -18,7 +18,7 @@ nc_retain_all()}
 \item{ages}{set of ages for which retention curves will be calculated separately}
 }
 \description{
-Convenience functions for the NC analysis, mainly wrappers for 
+Convenience functions for the NC analysis, mainly wrappers for
 \code{\link{yrs_result_retain}}
 }
 \section{Functions}{
@@ -35,7 +35,7 @@ hunt_split <- hunt \%>\%
     yrs_lifetime_join(sale, lic, "sportsman") \%>\%
     yrs_zero_split() \%>\%
     yrs_zero_filter(function(x) filter(x, life_group == "sportsman"))
-    
+
 retain <- nc_retain_all(hunt_split, 40:50) \%>\% nc_retain()
 retain \%>\%
     ggplot(aes(current_age, yrs)) +

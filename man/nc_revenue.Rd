@@ -41,8 +41,8 @@ license-based WSFR dollars}
 
 \item{inflation}{inflation rate for depreciation of lifetime fund}
 
-\item{perpetuity}{if TRUE, us a perpetuity calculation 
-(\url{https://en.wikipedia.org/wiki/Perpetuity}) instead of 
+\item{perpetuity}{if TRUE, use a perpetuity calculation
+(\url{https://en.wikipedia.org/wiki/Perpetuity}) instead of
 \code{\link{present_value}}}
 
 \item{annual_revenue}{target revenue to solve lifetime break-even price}
@@ -72,11 +72,11 @@ price_lifetime <- 250
 senior_price <- 15 # lifetime license price at age 65
 wsfr_amount <- 16.65 # WSFR estimated aid amount per hunter
 min_amount <- 2 # WSFR minimum revenue for certified hunter calculations
-prices <- tibble(current_age = 16:63, price_lifetime = rep(price_lifetime, 48), 
+prices <- tibble(current_age = 16:63, price_lifetime = rep(price_lifetime, 48),
                 price_annual = rep(price_annual, 48))
 return_life <- 0.05 # annual return to lifetime fund
 inflation <- 0.02 # inflation rate for fund depreciation
-                
+
 # annual
 annual <- retain \%>\%
     nc_revenue_annual(prices, wsfr_amount, min_amount, senior_price)
@@ -85,15 +85,15 @@ ggplot(annual, aes(current_age, revenue_annual, fill = stream)) + geom_col()
 # lifetime
 lifetime <- prices \%>\%
     nc_revenue_lifetime(wsfr_amount, min_amount, return_life, inflation)
-ggplot(lifetime, aes(current_age, revenue_lifetime, fill = stream)) + 
+ggplot(lifetime, aes(current_age, revenue_lifetime, fill = stream)) +
     geom_col()
 
 # compare
 left_join(lifetime, annual, by = c("current_age", "stream")) \%>\%
     mutate(revenue_effect = revenue_lifetime - revenue_annual) \%>\%
-    ggplot(aes(current_age, revenue_effect, fill = stream)) + 
+    ggplot(aes(current_age, revenue_effect, fill = stream)) +
     geom_col()
-    
+
 # break-even
 x <- nc_break_even(annual, wsfr_amount, min_amount, return_life, inflation)
 ggplot(x, aes(current_age, break_even)) + geom_line()
