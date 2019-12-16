@@ -11,7 +11,7 @@ NULL
 # - https://github.com/r-lib/devtools/issues/1714
 if (getRversion() >= "2.15.1") {
     utils::globalVariables(
-        c("method", "stream", "revenue_annual", "revenue_lifetime")
+        c("method", "stream", "revenue_annual", "revenue_lifetime", "year")
     )
 }
 

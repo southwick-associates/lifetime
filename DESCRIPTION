@@ -3,15 +3,17 @@ Type: Package
 Title: Provide functions for lifetime pricing
 Version: 1.0
 Authors@R: person("Dan", "Kary", email = "dan@southwickassociates.com", role = c("aut", "cre"))
-Description: This packages was based on the NC project from late 2019, including
-    functions for producing final analysis, as well as functions for evaluating
-    altermative methods; in particular for estimating counterfactual years of
-    license purchases (years by age, retention, logistic model retention)
+Description: This packages aslo includes functions for evaluating
+    alternative methods; in particular for estimating counterfactual years of
+    license purchases (years by age, retention, logistic model retention).
 License: Southwick Associates only
 Depends: R (>= 3.5.0)
 Imports:
     dplyr,
     ggplot2,
+    scales,
+    tidyr,
     mgcv
 Encoding: UTF-8
 LazyData: false
+RoxygenNote: 6.1.0
