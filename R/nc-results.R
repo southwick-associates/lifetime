@@ -11,6 +11,8 @@
 #' @param retain_all full set of retention curve results produced by
 #' nc_retain_all()
 #' @param ages set of ages for which retention curves will be calculated separately
+#' @param use_observed if TRUE, return observed (instead of predicted) retention
+#' rates
 #' @family wrapper functions for NC results
 #' @export
 #' @examples
@@ -23,11 +25,25 @@
 #'     yrs_zero_split() %>%
 #'     yrs_zero_filter(function(x) filter(x, life_group == "sportsman"))
 #'
-#' retain <- nc_retain_all(hunt_split, 40:50) %>% nc_retain()
+#' observe_all <- nc_retain_all(hunt_split, 52:58, use_observed = TRUE)
+#' retain_all <- nc_retain_all(hunt_split, 52:58)
+#' retain <- nc_retain(retain_all)
 #' retain %>%
 #'     ggplot(aes(current_age, yrs)) +
 #'     geom_point() +
 #'     ggtitle("Predicted years of purchases by current age")
+#'
+#' # observed vs predicted for specified ages
+#' observe <- filter(observe_all, current_age == 52)
+#' retain <- filter(retain_all, current_age == 52)
+#' yrs_plot(retain) + geom_point(data = observe) +
+#'     ggtitle("Some noisy data points due to sample size")
+#'
+#' observe <- filter(observe_all, current_age == 58)
+#' retain <- filter(retain_all, current_age == 58)
+#' yrs_plot(retain) + geom_point(data = observe) +
+#'     ggtitle("Observed rates are used for old enough buyers",
+#'             "Senior lifetime artifacts emerge at age 65")
 nc_retain <- function(retain_all) {
     retain_all %>%
         arrange(.data$current_age, .data$years_since) %>%
@@ -38,12 +54,16 @@ nc_retain <- function(retain_all) {
 
 #' @describeIn nc_retain Predict full retention curves
 #' @export
-nc_retain_all <- function(history_split, ages) {
+nc_retain_all <- function(history_split, ages, use_observed = FALSE) {
     retain_one <- function(history_split, age_slct) {
-        history_split %>%
-            yrs_zero_filter(function(x) filter(x, .data$age_year == age_slct)) %>%
-            yrs_result_retain(predict_age = age_slct) %>%
-            mutate(current_age = age_slct)
+        x <- history_split %>%
+            yrs_zero_filter(function(x) filter(x, .data$age_year == age_slct))
+        if (use_observed) {
+            x <- yrs_result_observe(x, predict_age = age_slct)
+        } else {
+            x <- yrs_result_retain(x, predict_age = age_slct)
+        }
+        mutate(x, current_age = age_slct)
     }
     ages %>%
         sapply(function(x) retain_one(history_split, x),

@@ -623,15 +623,21 @@ yrs_result_retain <- function(
     model = function(x) yrs_fit_retain(x)
 ) {
     train_df <- yrs_result_observe(history_split, predict_age)
-    model_fit <- model(train_df)
 
-    num_yrs_fwd <- end_age - predict_age
-    tibble(years_since = 1:num_yrs_fwd) %>%
-        yrs_predict_retain(model_fit) %>%
-        mutate(
-            age_year = predict_age + .data$years_since,
-            n = max(train_df$n0)
-        )
+    if (end_age %in% train_df$age_year) {
+        # use observed data if no extrapolation needs to be performed
+        # - this also avoids artifacts from cheap senior lifetime licenses
+        predict_df <- filter(train_df, .data$age_year <= end_age) %>%
+            mutate(method = "retain")
+    } else {
+        model_fit <- model(train_df)
+        num_yrs_fwd <- end_age - predict_age
+        predict_df <- tibble(years_since = 1:num_yrs_fwd) %>%
+            yrs_predict_retain(model_fit)
+    }
+    predict_df %>%
+        mutate(age_year = predict_age + .data$years_since, n = max(train_df$n0)) %>%
+        select(.data$years_since, .data$pct, .data$method, .data$age_year, .data$n)
 }
 
 #' @describeIn yrs_result Results for predicting license buying - predicted renewal
@@ -640,14 +646,16 @@ yrs_result_renew <- function(
     history_split, history_predict = NULL, predict_age = 30, end_age = 64
 ) {
     # train model
-    train_df <- yrs_calc_renew(history_split)
+    num_yrs_fwd <- end_age - predict_age
+    train_df <- yrs_calc_renew(history_split) %>%
+        # we don't want to include ages past end_age in training data
+        filter(.data$years_since <= num_yrs_fwd)
     model_fit <- yrs_fit_renew(train_df)
 
     # cast prediction data out to all years needed
     if (is.null(history_predict)) {
         history_predict <- history_split$year0
     }
-    num_yrs_fwd <- end_age - predict_age
     predict_df <- 1:num_yrs_fwd %>%
         sapply(function(i) mutate(history_predict, years_since = i),
                simplify = FALSE) %>%
