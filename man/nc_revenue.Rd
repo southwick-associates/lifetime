@@ -11,10 +11,10 @@ nc_revenue_annual(retain, prices, wsfr_amount, min_amount, senior_price,
   senior_age = 65, age_cutoff = 80)
 
 nc_revenue_lifetime(prices, wsfr_amount, min_amount, return_life,
-  inflation, perpetuity = FALSE)
+  inflation, perpetuity = TRUE)
 
 nc_break_even(annual_revenue, wsfr_amount, min_amount, return_life,
-  inflation, perpetuity = FALSE, ignore_wsfr = TRUE)
+  inflation, perpetuity = TRUE, ignore_wsfr = TRUE)
 }
 \arguments{
 \item{retain}{data frame of predicted years by age like that produced by

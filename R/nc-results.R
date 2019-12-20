@@ -166,7 +166,7 @@ nc_revenue_annual <- function(
 #' @export
 nc_revenue_lifetime <- function(
     prices, wsfr_amount, min_amount, return_life, inflation,
-    perpetuity = FALSE
+    perpetuity = TRUE
 ) {
     wsfr <- prices %>%
         wsfr_lifetime(wsfr_amount, min_amount) %>%
@@ -191,7 +191,7 @@ nc_revenue_lifetime <- function(
 #' @export
 nc_break_even <- function(
     annual_revenue, wsfr_amount, min_amount, return_life, inflation,
-    perpetuity = FALSE, ignore_wsfr = TRUE
+    perpetuity = TRUE, ignore_wsfr = TRUE
 ) {
     revenue <- annual_revenue
     if (ignore_wsfr) {
