@@ -71,26 +71,6 @@ nc_retain_all <- function(history_split, ages, use_observed = FALSE) {
         bind_rows()
 }
 
-#' Get expected annual revenue-equivalent years for youths
-#'
-#' This is applied as a way to include annual revenue estimates for infants and
-#' youths. It essentially applies a depreciation to the annual revenue estimates,
-#' providing break-even estimates that are lower for youths.
-#'
-#' @param retain retention results like those produced by \code{\link{nc_retain}}
-#' @param rate depreciation rate
-#' @param ages ages for youth (i.e., those that haven't been already estimated)
-#' @family wrapper functions for NC results
-#' @export
-nc_retain_youth <- function(retain, rate = 0.03, ages = 0:15) {
-    retain_16 <- filter(retain, .data$current_age == max(ages) + 1)
-    retain_pre16 <- tibble(current_age = ages, last_pct = retain_16$last_pct) %>%
-        arrange(desc(.data$current_age)) %>%
-        mutate(yrs = compound_interest(retain_16$yrs, -rate, ages+1)) %>%
-        arrange(.data$current_age)
-    bind_rows(retain_pre16, retain)
-}
-
 # Revenue -----------------------------------------------------------------
 
 #' Calculate revenue for annual vs lifetime scenarios
@@ -101,8 +81,9 @@ nc_retain_youth <- function(retain, rate = 0.03, ages = 0:15) {
 #' \code{\link{present_value}}
 #' @param return_life percentage return from lifetime fund
 #' @param inflation inflation rate for depreciation of lifetime fund
-#' @param annual_revenue target revenue to solve lifetime break-even price
-#' @param ignore_wsfr if TRUE, don't include WSFR dollars in break-even price
+#' @param youth_ages if not NULL, assumes for youths that the fund is able to
+#' compound until adulthood (when the agency will begin drawing revenue). See
+#' \code{\link{nc_price_lifetime_youth}} for details.
 #' @name nc_revenue
 #' @family wrapper functions for NC results
 #' @examples
@@ -116,10 +97,12 @@ nc_retain_youth <- function(retain, rate = 0.03, ages = 0:15) {
 #' senior_price <- 15 # lifetime license price at age 65
 #' wsfr_amount <- 16.65 # WSFR estimated aid amount per hunter
 #' min_amount <- 2 # WSFR minimum revenue for certified hunter calculations
-#' prices <- tibble(current_age = 16:63, price_lifetime = rep(price_lifetime, 48),
-#'                 price_annual = rep(price_annual, 48))
 #' return_life <- 0.05 # annual return to lifetime fund
 #' inflation <- 0.02 # inflation rate for fund depreciation
+#' prices <- tibble(
+#'     current_age = 0:63, price_lifetime = rep(price_lifetime, 64),
+#'     price_annual = rep(price_annual, 64)
+#' )
 #'
 #' # annual
 #' annual <- retain %>%
@@ -151,8 +134,19 @@ NULL
 #' @export
 nc_revenue_annual <- function(
     retain, prices, wsfr_amount, min_amount, senior_price,
-    senior_age = 65, age_cutoff = 80
+    senior_age = 65, age_cutoff = 80, youth_ages = 0:15
 ) {
+    if (!is.null(youth_ages)) {
+        # for youths, assume ages match the first adult age
+        first_adult <- retain %>%
+            filter(.data$current_age == max(youth_ages) + 1)
+        retain <- tibble(
+            current_age = youth_ages,
+            yrs = first_adult$yrs,
+            last_pct = first_adult$last_pct
+        ) %>%
+            bind_rows(retain)
+    }
     retain %>%
         wsfr_annual(wsfr_amount, min_amount, senior_price,
                     senior_age, age_cutoff) %>%
@@ -166,12 +160,17 @@ nc_revenue_annual <- function(
 #' @export
 nc_revenue_lifetime <- function(
     prices, wsfr_amount, min_amount, return_life, inflation,
-    perpetuity = TRUE
+    perpetuity = TRUE, youth_ages = 0:15
 ) {
     wsfr <- prices %>%
         wsfr_lifetime(wsfr_amount, min_amount) %>%
         select(-contains("price"))
 
+    if (!is.null(youth_ages)) {
+        # youth prices need to be compounded for valuation
+        prices <- prices %>%
+            nc_price_lifetime_youth(return_life, inflation, youth_ages)
+    }
     if (perpetuity) {
         lic <- prices %>%
             mutate(lic_revenue = .data$price_lifetime * return_life / inflation)
@@ -187,11 +186,59 @@ nc_revenue_lifetime <- function(
         select(.data$current_age, .data$stream, .data$revenue_lifetime)
 }
 
-#' @describeIn nc_revenue Find price (by current_age) where R|A == R|L
+#' Calculate compounded price for youth lifetimes
+#'
+#' This function is based on the assumption that youth lifetime sales are
+#' treated differently than those for adults. In NC, the revenue for a youth sale
+#' cannot be withdrawn (from the fund) until age 16. This implies that a youth
+#' lifetime license sale has greater value (since it is able to compound).
+#'
+#' @inheritParams nc_revenue
+#' @family wrapper functions for NC results
 #' @export
+#' @examples
+#' library(dplyr)
+#' library(ggplot2)
+#' prices <- tibble(
+#'     current_age = c(0:15, 16:63),
+#'     price_lifetime = c(rep(250, 64))
+#' )
+#' prices2 <- nc_price_lifetime_youth(prices, 0.05, 0.022)
+#' ggplot(prices, aes(current_age, price_lifetime)) +
+#'     geom_line() +
+#'     geom_line(data = prices2, color = "blue") +
+#'     scale_y_continuous(limits = c(0, 600))
+nc_price_lifetime_youth <- function(
+    prices, return_life, inflation, youth_ages = 0:15
+) {
+    adult_age <- max(youth_ages) + 1
+    prices %>% mutate(
+        price_lifetime = ifelse(.data$current_age %in% youth_ages, compound_interest(
+                p0 = .data$price_lifetime,
+                r = return_life - inflation,
+                t = adult_age - .data$current_age,
+                n = 1 # annual compounding
+            ), .data$price_lifetime)
+    )
+}
+
+# Break-even --------------------------------------------------------------
+
+#' Find lifetime price (by current_age) where Revenue|A == Revenue|L
+#'
+#' This uses a solver function, \code{\link[stats]{uniroot}}, to find break-even
+#' prices for lifetime licenses given predicted annual revenue.
+#'
+#' @inheritParams nc_revenue
+#' @param annual_revenue target revenue to solve lifetime break-even price
+#' @param ignore_wsfr if TRUE, don't include WSFR dollars in break-even price
+#' @family wrapper functions for NC results
+#' @export
+#' @examples
+#' # see ?nc_revenue for an example
 nc_break_even <- function(
     annual_revenue, wsfr_amount, min_amount, return_life, inflation,
-    perpetuity = TRUE, ignore_wsfr = TRUE
+    perpetuity = TRUE, ignore_wsfr = TRUE, youth_ages = 0:15
 ) {
     revenue <- annual_revenue
     if (ignore_wsfr) {
@@ -205,7 +252,7 @@ nc_break_even <- function(
         annual <- filter(revenue, .data$current_age == age)
         lifetime <- tibble(current_age = age, price_lifetime = price) %>%
             nc_revenue_lifetime(wsfr_amount, min_amount, return_life, inflation,
-                                perpetuity)
+                                perpetuity, youth_ages)
         if (ignore_wsfr) lifetime <- filter(lifetime, .data$stream == "lic_revenue")
         sum(lifetime$revenue_lifetime) - sum(annual$revenue_annual)
     }

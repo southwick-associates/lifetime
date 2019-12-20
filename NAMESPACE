@@ -2,9 +2,9 @@
 
 export(compound_interest)
 export(nc_break_even)
+export(nc_price_lifetime_youth)
 export(nc_retain)
 export(nc_retain_all)
-export(nc_retain_youth)
 export(nc_revenue_annual)
 export(nc_revenue_lifetime)
 export(present_value)

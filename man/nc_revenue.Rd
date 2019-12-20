@@ -4,17 +4,13 @@
 \alias{nc_revenue}
 \alias{nc_revenue_annual}
 \alias{nc_revenue_lifetime}
-\alias{nc_break_even}
 \title{Calculate revenue for annual vs lifetime scenarios}
 \usage{
 nc_revenue_annual(retain, prices, wsfr_amount, min_amount, senior_price,
-  senior_age = 65, age_cutoff = 80)
+  senior_age = 65, age_cutoff = 80, youth_ages = 0:15)
 
 nc_revenue_lifetime(prices, wsfr_amount, min_amount, return_life,
-  inflation, perpetuity = TRUE)
-
-nc_break_even(annual_revenue, wsfr_amount, min_amount, return_life,
-  inflation, perpetuity = TRUE, ignore_wsfr = TRUE)
+  inflation, perpetuity = TRUE, youth_ages = 0:15)
 }
 \arguments{
 \item{retain}{data frame of predicted years by age like that produced by
@@ -37,6 +33,10 @@ a cheap lifetime license}
 \item{age_cutoff}{numeric final age that can be counted for lifetime 
 license-based WSFR dollars}
 
+\item{youth_ages}{if not NULL, assumes for youths that the fund is able to
+compound until adulthood (when the agency will begin drawing revenue). See
+\code{\link{nc_price_lifetime_youth}} for details.}
+
 \item{return_life}{percentage return from lifetime fund}
 
 \item{inflation}{inflation rate for depreciation of lifetime fund}
@@ -44,10 +44,6 @@ license-based WSFR dollars}
 \item{perpetuity}{if TRUE, use a perpetuity calculation
 (\url{https://en.wikipedia.org/wiki/Perpetuity}) instead of
 \code{\link{present_value}}}
-
-\item{annual_revenue}{target revenue to solve lifetime break-even price}
-
-\item{ignore_wsfr}{if TRUE, don't include WSFR dollars in break-even price}
 }
 \description{
 Calculate revenue for annual vs lifetime scenarios
@@ -57,8 +53,6 @@ Calculate revenue for annual vs lifetime scenarios
 \item \code{nc_revenue_annual}: Revenue for annual scenario (R|A)
 
 \item \code{nc_revenue_lifetime}: Revenue for lifetime scenario (R|L)
-
-\item \code{nc_break_even}: Find price (by current_age) where R|A == R|L
 }}
 
 \examples{
@@ -72,10 +66,12 @@ price_lifetime <- 250
 senior_price <- 15 # lifetime license price at age 65
 wsfr_amount <- 16.65 # WSFR estimated aid amount per hunter
 min_amount <- 2 # WSFR minimum revenue for certified hunter calculations
-prices <- tibble(current_age = 16:63, price_lifetime = rep(price_lifetime, 48),
-                price_annual = rep(price_annual, 48))
 return_life <- 0.05 # annual return to lifetime fund
 inflation <- 0.02 # inflation rate for fund depreciation
+prices <- tibble(
+    current_age = 0:63, price_lifetime = rep(price_lifetime, 64),
+    price_annual = rep(price_annual, 64)
+)
 
 # annual
 annual <- retain \%>\%
@@ -103,7 +99,8 @@ x <- nc_break_even(annual, wsfr_amount, min_amount, return_life, inflation,
 ggplot(x, aes(current_age, break_even)) + geom_line()
 }
 \seealso{
-Other wrapper functions for NC results: \code{\link{nc_retain_youth}},
+Other wrapper functions for NC results: \code{\link{nc_break_even}},
+  \code{\link{nc_price_lifetime_youth}},
   \code{\link{nc_retain}}
 }
 \concept{wrapper functions for NC results}
