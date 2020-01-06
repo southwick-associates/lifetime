@@ -23,7 +23,9 @@ compound until adulthood (when the agency will begin drawing revenue). See
 This function is based on the assumption that youth lifetime sales are
 treated differently than those for adults. In NC, the revenue for a youth sale
 cannot be withdrawn (from the fund) until age 16. This implies that a youth
-lifetime license sale has greater value (since it is able to compound).
+lifetime license sale has greater value (since it is able to compound). Therefore
+the effective price is higher than the sticker price for the purpose of
+calculating present value of the lifetime license.
 }
 \examples{
 library(dplyr)
