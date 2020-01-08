@@ -128,6 +128,9 @@ nc_retain_all <- function(history_split, ages, use_observed = FALSE) {
 #' x <- nc_break_even(annual, wsfr_amount, min_amount, return_life, inflation,
 #'                    ignore_wsfr = FALSE)
 #' ggplot(x, aes(current_age, break_even)) + geom_line()
+#'
+#' # years to break-even
+#'
 NULL
 
 #' @describeIn nc_revenue Revenue for annual scenario (R|A)
@@ -267,4 +270,25 @@ nc_break_even <- function(
     tibble(
         current_age = ages, break_even = break_even
     )
+}
+
+#' Calculate number of years it takes to break even (if ever)
+#'
+#' Generally it will take some number of years for cumulative revenue in
+#' the lifetime scenario to catch up with cumulative revenue in the annual
+#' scenario. If the lifetime scenario does catch up, the years to break even
+#' represents the number of years it takes for this to happen.
+#'
+#' @inheritParams nc_break_even
+#' @family wrapper functions for NC results
+#' @export
+#' @examples
+#' # see ?nc_revenue for an example
+nc_break_even_yrs <- function(annual_revenue, lifetime_revenue) {
+    revenue <- annual_revenue %>%
+        inner_join(lifetime_revenue, by = c("current_age", "stream"))
+    if (ignore_wsfr) {
+        revenue <- filter(revenue, .data$stream == "lic_revenue")
+    }
+
 }
