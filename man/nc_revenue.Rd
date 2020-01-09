@@ -3,11 +3,18 @@
 \name{nc_revenue}
 \alias{nc_revenue}
 \alias{nc_revenue_annual}
+\alias{nc_revenue_annual2}
+\alias{nc_retain_youth}
 \alias{nc_revenue_lifetime}
 \title{Calculate revenue for annual vs lifetime scenarios}
 \usage{
 nc_revenue_annual(retain, prices, wsfr_amount, min_amount, senior_price,
   senior_age = 65, age_cutoff = 80, youth_ages = 0:15)
+
+nc_revenue_annual2(retain_all, prices, wsfr_amount, min_amount,
+  senior_price, senior_age = 65, age_cutoff = 80, youth_ages = 0:15)
+
+nc_retain_youth(retain_all, youth_ages = 0:15)
 
 nc_revenue_lifetime(prices, wsfr_amount, min_amount, return_life,
   inflation, perpetuity = TRUE, youth_ages = 0:15)
@@ -37,6 +44,9 @@ license-based WSFR dollars}
 compound until adulthood (when the agency will begin drawing revenue). See
 \code{\link{nc_price_lifetime_youth}} for details.}
 
+\item{retain_all}{data frame of predicted years by age like that produced by
+\code{\link{nc_retain_all}}}
+
 \item{return_life}{percentage return from lifetime fund}
 
 \item{inflation}{inflation rate for depreciation of lifetime fund}
@@ -51,6 +61,10 @@ Calculate revenue for annual vs lifetime scenarios
 \section{Functions}{
 \itemize{
 \item \code{nc_revenue_annual}: Revenue for annual scenario (R|A)
+
+\item \code{nc_revenue_annual2}: Revenue for annual scenario (Revenue|A)
+
+\item \code{nc_retain_youth}: Simulate retention curves for youths
 
 \item \code{nc_revenue_lifetime}: Revenue for lifetime scenario (R|L)
 }}

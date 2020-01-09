@@ -65,9 +65,18 @@ nc_retain_all <- function(history_split, ages, use_observed = FALSE) {
         }
         mutate(x, current_age = age_slct)
     }
-    ages %>%
+    retain_all <- ages %>%
         sapply(function(x) retain_one(history_split, x),
                simplify = FALSE) %>%
+        bind_rows()
+
+    # add a year zero 100% (for downstream annual revenue calculations)
+    sapply(ages, function(i) {
+        x <- filter(retain_all, .data$current_age == i)
+        filter(x, .data$years_since == 1) %>%
+            mutate(years_since = 0, pct = 1, age_year = i) %>%
+            bind_rows(x)
+    }, simplify = FALSE) %>%
         bind_rows()
 }
 
@@ -157,6 +166,49 @@ nc_revenue_annual <- function(
         mutate(lic_revenue = .data$price_annual * .data$yrs) %>%
         tidyr::gather(stream, revenue_annual, .data$wsfr_revenue, .data$lic_revenue) %>%
         select(.data$current_age, .data$stream, .data$revenue_annual)
+}
+
+#' @describeIn nc_revenue Revenue for annual scenario (Revenue|A)
+#' @export
+nc_revenue_annual2 <- function(
+    retain_all, prices, wsfr_amount, min_amount, senior_price,
+    senior_age = 65, age_cutoff = 80, youth_ages = 0:15
+) {
+    if (!is.null(youth_ages)) {
+        retain_all <- retain_all %>%
+            nc_retain_youth(youth_ages) %>%
+            bind_rows(retain_all)
+    }
+    retain_all %>%
+        revenue_wsfr_annual(wsfr_amount, min_amount, senior_price,
+                            senior_age, age_cutoff) %>%
+        left_join(prices, by = "current_age") %>%
+        mutate(lic_revenue = .data$price_annual * .data$pct) %>%
+        select(.data$current_age, .data$age_year, contains("revenue")) %>%
+        tidyr::gather(stream, revenue_annual, .data$wsfr_revenue, .data$lic_revenue)
+}
+
+#' @describeIn nc_revenue Simulate retention curves for youths
+#' @export
+nc_retain_youth <- function(retain_all, youth_ages = 0:15) {
+    # youths don't generate annual revenue until age 16 by default
+    # - years before first adult age are ignored for revenue purposes
+    # - retention as an adult matches first adult age
+    # - note: this likely overestimates future participation of these youths
+    adult_age <- max(youth_ages) + 1
+
+    first_adult <- retain_all %>%
+        filter(.data$current_age == adult_age) %>%
+        select(.data$age_year, .data$years_since, .data$pct)
+
+    youth_ages %>%
+        sapply(function(i) {
+            tibble(age_year = (i+1):adult_age) %>%
+                mutate(pct = 0, years_since = row_number()) %>%
+                bind_rows(first_adult) %>%
+                mutate(current_age = i)
+        }, simplify = FALSE) %>%
+        bind_rows()
 }
 
 #' @describeIn nc_revenue Revenue for lifetime scenario (R|L)
