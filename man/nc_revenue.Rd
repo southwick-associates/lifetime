@@ -97,9 +97,13 @@ ggplot(x, aes(current_age, break_even)) + geom_line()
 x <- nc_break_even(annual, wsfr_amount, min_amount, return_life, inflation,
                    ignore_wsfr = FALSE)
 ggplot(x, aes(current_age, break_even)) + geom_line()
+
+# years to break-even
+
 }
 \seealso{
-Other wrapper functions for NC results: \code{\link{nc_break_even}},
+Other wrapper functions for NC results: \code{\link{nc_break_even_yrs}},
+  \code{\link{nc_break_even}},
   \code{\link{nc_price_lifetime_youth}},
   \code{\link{nc_retain}}
 }

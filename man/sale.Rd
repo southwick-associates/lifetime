@@ -10,7 +10,8 @@ Data: hunting sales for license types of interest in sample
 }
 \seealso{
 Other Data: \code{\link{cust}}, \code{\link{hunt}},
-  \code{\link{lic}}, \code{\link{retain}}
+  \code{\link{lic}}, \code{\link{retain_all}},
+  \code{\link{retain}}
 }
 \concept{Data}
 \keyword{datasets}

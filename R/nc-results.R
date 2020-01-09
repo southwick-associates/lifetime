@@ -280,11 +280,14 @@ nc_break_even <- function(
 #' represents the number of years it takes for this to happen.
 #'
 #' @inheritParams nc_break_even
+#' @param lifetime_revenue revenue for lifetime scenario
 #' @family wrapper functions for NC results
 #' @export
 #' @examples
 #' # see ?nc_revenue for an example
-nc_break_even_yrs <- function(annual_revenue, lifetime_revenue) {
+nc_break_even_yrs <- function(
+    annual_revenue, lifetime_revenue, ignore_wsfr = TRUE
+) {
     revenue <- annual_revenue %>%
         inner_join(lifetime_revenue, by = c("current_age", "stream"))
     if (ignore_wsfr) {

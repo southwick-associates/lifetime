@@ -59,3 +59,12 @@ NULL
 #' @format data frame
 #' @family Data
 NULL
+
+#' Data: Retention years results by current & future age
+#'
+#' @docType data
+#' @keywords datasets
+#' @name retain_all
+#' @format data frame
+#' @family Data
+NULL

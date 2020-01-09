@@ -10,7 +10,8 @@ Data: 100K customer sample
 }
 \seealso{
 Other Data: \code{\link{hunt}}, \code{\link{lic}},
-  \code{\link{retain}}, \code{\link{sale}}
+  \code{\link{retain_all}}, \code{\link{retain}},
+  \code{\link{sale}}
 }
 \concept{Data}
 \keyword{datasets}

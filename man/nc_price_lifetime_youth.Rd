@@ -41,7 +41,8 @@ ggplot(prices, aes(current_age, price_lifetime)) +
     scale_y_continuous(limits = c(0, 600))
 }
 \seealso{
-Other wrapper functions for NC results: \code{\link{nc_break_even}},
-  \code{\link{nc_retain}}, \code{\link{nc_revenue}}
+Other wrapper functions for NC results: \code{\link{nc_break_even_yrs}},
+  \code{\link{nc_break_even}}, \code{\link{nc_retain}},
+  \code{\link{nc_revenue}}
 }
 \concept{wrapper functions for NC results}

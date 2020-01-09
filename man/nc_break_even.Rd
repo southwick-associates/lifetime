@@ -39,7 +39,8 @@ prices for lifetime licenses given predicted annual revenue.
 # see ?nc_revenue for an example
 }
 \seealso{
-Other wrapper functions for NC results: \code{\link{nc_price_lifetime_youth}},
+Other wrapper functions for NC results: \code{\link{nc_break_even_yrs}},
+  \code{\link{nc_price_lifetime_youth}},
   \code{\link{nc_retain}}, \code{\link{nc_revenue}}
 }
 \concept{wrapper functions for NC results}

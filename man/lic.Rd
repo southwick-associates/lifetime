@@ -10,7 +10,8 @@ Data: license types of interest for analysis
 }
 \seealso{
 Other Data: \code{\link{cust}}, \code{\link{hunt}},
-  \code{\link{retain}}, \code{\link{sale}}
+  \code{\link{retain_all}}, \code{\link{retain}},
+  \code{\link{sale}}
 }
 \concept{Data}
 \keyword{datasets}
