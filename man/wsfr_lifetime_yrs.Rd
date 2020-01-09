@@ -12,10 +12,10 @@ wsfr_lifetime_yrs(price_lifetime, current_age, min_amount,
 
 \item{current_age}{numeric age}
 
-\item{min_amount}{numeric the minimum expenditure that will count for a 
+\item{min_amount}{numeric the minimum expenditure that will count for a
 certified hunter/angler (use 2 for hunt/fish and 4 for combo)}
 
-\item{age_cutoff}{numeric final age that can be counted for lifetime 
+\item{age_cutoff}{numeric final age that can be counted for lifetime
 license-based WSFR dollars}
 }
 \description{

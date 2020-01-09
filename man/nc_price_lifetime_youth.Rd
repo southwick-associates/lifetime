@@ -8,7 +8,7 @@ nc_price_lifetime_youth(prices, return_life, inflation,
   youth_ages = 0:15)
 }
 \arguments{
-\item{prices}{data frame of lifetime prices by age with at least 
+\item{prices}{data frame of lifetime prices by age with at least
 2 variables: current_age and price_lifetime}
 
 \item{return_life}{percentage return from lifetime fund}

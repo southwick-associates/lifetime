@@ -6,47 +6,47 @@
 \alias{wsfr_lifetime}
 \title{Calculate WSFR Aid dollars by current age}
 \usage{
-wsfr_annual(retain, wsfr_amount, min_amount, senior_price,
+wsfr_annual(retain_all, wsfr_amount, min_amount, senior_price,
   senior_age = 65, age_cutoff = 80)
 
 wsfr_lifetime(prices, wsfr_amount, min_amount, age_cutoff = 80)
 }
 \arguments{
-\item{retain}{data frame of predicted years by age like that produced by
-\code{\link{nc_retain}}}
+\item{retain_all}{data frame of predicted years by age like that produced by
+\code{\link{nc_retain_all}}}
 
-\item{wsfr_amount}{numeric estimated amount for aid dollars (use SFRF for 
+\item{wsfr_amount}{numeric estimated amount for aid dollars (use SFRF for
 fishing, WRF for hunting)}
 
-\item{min_amount}{numeric the minimum expenditure that will count for a 
+\item{min_amount}{numeric the minimum expenditure that will count for a
 certified hunter/angler (use 2 for hunt/fish and 4 for combo)}
 
 \item{senior_price}{numeric price for a senior lifetime license}
 
-\item{senior_age}{numeric age when a participant will be expected to buy 
+\item{senior_age}{numeric age when a participant will be expected to buy
 a cheap lifetime license}
 
-\item{age_cutoff}{numeric final age that can be counted for lifetime 
+\item{age_cutoff}{numeric final age that can be counted for lifetime
 license-based WSFR dollars}
 
-\item{prices}{data frame of lifetime prices by age with at least 
+\item{prices}{data frame of lifetime prices by age with at least
 2 variables: current_age and price_lifetime}
 }
 \description{
-Estimated aid dollars are determined differently for the annual vs. lifetime 
+Estimated aid dollars are determined differently for the annual vs. lifetime
 purchasing scenarios (see functions section below). Links to a web-based
 reference document are included in details below.
 }
 \details{
 These calculations are based on a discussion between Tom, Dan, Eric, and
-Patty on 12/10/19. Primarily using 
+Patty on 12/10/19. Primarily using
 \url{https://www.law.cornell.edu/cfr/text/50/part-80} to highlight a number
 of points about WSFR aid predictions for lifetime license sales:
 \itemize{
-  \item There is an age cutoff of 80 years (in lieu of a life-expectancy-based 
-  attrition estimate): 
+  \item There is an age cutoff of 80 years (in lieu of a life-expectancy-based
+  attrition estimate):
   \href{https://www.law.cornell.edu/cfr/text/50/80.35}{section 35} bullet H
-  \item It looks like infants can be counted: 
+  \item It looks like infants can be counted:
   \href{https://www.law.cornell.edu/cfr/text/50/80.33}{section 33} bullet C
   \item The required annual amount is $2 for hunt/fish and $4 for combo:
   \href{https://www.law.cornell.edu/cfr/text/50/80.34}{section 34} bullet A
@@ -57,17 +57,23 @@ of points about WSFR aid predictions for lifetime license sales:
 \item \code{wsfr_annual}: WSFR Aid for annual license scenario
 
 This depends largely on the estimated number of years a license buyers will
-participate in the future. It also assumes by default that any remaining 
-participants will buy a lifetime license at age 65.
+participate in the future. It also assumes by default that any remaining
+participants will buy a lifetime license at senior_age.
 
 \item \code{wsfr_lifetime}: WSFR Aid for lifetime license scenario
 }}
 
 \examples{
+data(retain_all)
 data(retain)
-aidA <- wsfr_annual(retain, 16.65, 2, 15)
+aidA <- wsfr_annual(
+    retain_all, wsfr_amount = 16.65, min_amount = 2, senior_price = 15
+)
 prices <- data.frame(current_age = 16:63, price_lifetime = rep(250, 48))
 aidL <- wsfr_lifetime(prices, 16.65, 2)
+
+# TODO: update this once wsfr_lifetime() is updated
+# - note that I just broke downsream functionality...
 aidL$wsfr_revenue - aidA$wsfr_revenue
 }
 \seealso{

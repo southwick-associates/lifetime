@@ -11,10 +11,10 @@ nc_break_even(annual_revenue, wsfr_amount, min_amount, return_life,
 \arguments{
 \item{annual_revenue}{target revenue to solve lifetime break-even price}
 
-\item{wsfr_amount}{numeric estimated amount for aid dollars (use SFRF for 
+\item{wsfr_amount}{numeric estimated amount for aid dollars (use SFRF for
 fishing, WRF for hunting)}
 
-\item{min_amount}{numeric the minimum expenditure that will count for a 
+\item{min_amount}{numeric the minimum expenditure that will count for a
 certified hunter/angler (use 2 for hunt/fish and 4 for combo)}
 
 \item{return_life}{percentage return from lifetime fund}

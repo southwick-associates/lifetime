@@ -13,24 +13,21 @@ nc_revenue_lifetime(prices, wsfr_amount, min_amount, return_life,
   inflation, perpetuity = TRUE, youth_ages = 0:15)
 }
 \arguments{
-\item{retain}{data frame of predicted years by age like that produced by
-\code{\link{nc_retain}}}
-
-\item{prices}{data frame of lifetime prices by age with at least 
+\item{prices}{data frame of lifetime prices by age with at least
 2 variables: current_age and price_lifetime}
 
-\item{wsfr_amount}{numeric estimated amount for aid dollars (use SFRF for 
+\item{wsfr_amount}{numeric estimated amount for aid dollars (use SFRF for
 fishing, WRF for hunting)}
 
-\item{min_amount}{numeric the minimum expenditure that will count for a 
+\item{min_amount}{numeric the minimum expenditure that will count for a
 certified hunter/angler (use 2 for hunt/fish and 4 for combo)}
 
 \item{senior_price}{numeric price for a senior lifetime license}
 
-\item{senior_age}{numeric age when a participant will be expected to buy 
+\item{senior_age}{numeric age when a participant will be expected to buy
 a cheap lifetime license}
 
-\item{age_cutoff}{numeric final age that can be counted for lifetime 
+\item{age_cutoff}{numeric final age that can be counted for lifetime
 license-based WSFR dollars}
 
 \item{youth_ages}{if not NULL, assumes for youths that the fund is able to

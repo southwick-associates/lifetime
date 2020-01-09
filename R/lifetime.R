@@ -51,7 +51,7 @@ NULL
 #' @family Data
 NULL
 
-#' Data: Retention years results by age
+#' Data: Sportsman Retention years results by age
 #'
 #' @docType data
 #' @keywords datasets
@@ -60,7 +60,7 @@ NULL
 #' @family Data
 NULL
 
-#' Data: Retention years results by current & future age
+#' Data: Sportsman Retention years results by current & future age
 #'
 #' @docType data
 #' @keywords datasets

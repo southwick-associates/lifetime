@@ -3,10 +3,10 @@
 \docType{data}
 \name{retain_all}
 \alias{retain_all}
-\title{Data: Retention years results by current & future age}
+\title{Data: Sportsman Retention years results by current & future age}
 \format{data frame}
 \description{
-Data: Retention years results by current & future age
+Data: Sportsman Retention years results by current & future age
 }
 \seealso{
 Other Data: \code{\link{cust}}, \code{\link{hunt}},
