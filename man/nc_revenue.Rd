@@ -13,6 +13,9 @@ nc_revenue_lifetime(prices, wsfr_amount, min_amount, return_life,
   inflation, perpetuity = TRUE, youth_ages = 0:15)
 }
 \arguments{
+\item{retain}{data frame of predicted years by age like that produced by
+\code{\link{nc_retain}}}
+
 \item{prices}{data frame of lifetime prices by age with at least
 2 variables: current_age and price_lifetime}
 

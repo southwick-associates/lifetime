@@ -24,6 +24,8 @@
 #'   \href{https://www.law.cornell.edu/cfr/text/50/80.34}{section 34} bullet A
 #' }
 #'
+#' @param retain data frame of predicted years by age like that produced by
+#' \code{\link{nc_retain}}
 #' @param retain_all data frame of predicted years by age like that produced by
 #' \code{\link{nc_retain_all}}
 #' @param wsfr_amount numeric estimated amount for aid dollars (use SFRF for
@@ -40,18 +42,47 @@
 #' @name wsfr
 #' @family estimating revenue
 #' @examples
+#' library(dplyr)
+#' library(ggplot2)
 #' data(retain_all)
-#' data(retain)
-#' aidA <- wsfr_annual(
-#'     retain_all, wsfr_amount = 16.65, min_amount = 2, senior_price = 15
-#' )
-#' prices <- data.frame(current_age = 16:63, price_lifetime = rep(250, 48))
-#' aidL <- wsfr_lifetime(prices, 16.65, 2)
 #'
-#' # TODO: update this once wsfr_lifetime() is updated
-#' # - note that I just broke downsream functionality...
-#' aidL$wsfr_revenue - aidA$wsfr_revenue
+#' # wsfr in annual scenario
+#' aid <- revenue_wsfr_annual(
+#'     retain_all, wsfr_amount = 16.65, min_amount = 4, senior_price = 15
+#' )
+#' filter(aid, current_age == 16) %>%
+#'     ggplot(aes(age_year, wsfr_revenue)) + geom_col()
+#'
+#' # wsfr in lifetime scenario
+#' prices <- data.frame(current_age = 16:63, price_lifetime = rep(250, 48))
+#' aid <- revenue_wsfr_lifetime(prices, wsfr_amount = 16.65, min_amount = 4)
+#' filter(aid, current_age == 16) %>%
+#'     ggplot(aes(age_year, wsfr_revenue)) + geom_col()
 NULL
+
+#' @describeIn wsfr WSFR Aid for annual license scenario
+#'
+#' This depends largely on the estimated number of years a license buyers will
+#' participate in the future. It also assumes by default that any remaining
+#' participants will buy a lifetime license at age 65.
+#' @export
+wsfr_annual <- function(
+    retain, wsfr_amount, min_amount, senior_price,
+    senior_age = 65, age_cutoff = 80
+) {
+    wsfr_aid <- retain %>% mutate(
+        annual_revenue = .data$yrs * wsfr_amount,
+        # additional aid revenue accrues when a senior lifetime lic is bought
+        # - the number of years is limited by the USFWS formula
+        senior_years = wsfr_lifetime_yrs(senior_price, senior_age, min_amount,
+                                         age_cutoff),
+        # - only a fraction of buyers will still be participating as seniors
+        senior_revenue = .data$senior_years * wsfr_amount * .data$last_pct,
+        wsfr_revenue = .data$annual_revenue + .data$senior_revenue
+    ) %>%
+        select(.data$current_age, .data$wsfr_revenue)
+    left_join(retain, wsfr_aid, by = "current_age")
+}
 
 #' @describeIn wsfr WSFR Aid for annual license scenario
 #'
@@ -59,7 +90,7 @@ NULL
 #' participate in the future. It also assumes by default that any remaining
 #' participants will buy a lifetime license at senior_age.
 #' @export
-wsfr_annual <- function(
+revenue_wsfr_annual <- function(
     retain_all, wsfr_amount, min_amount, senior_price,
     senior_age = 65, age_cutoff = 80
 ) {
@@ -67,8 +98,8 @@ wsfr_annual <- function(
     num_yrs <- wsfr_lifetime_yrs(
         senior_price, senior_age, min_amount, age_cutoff
     )
-    fwd_one_year <- function(df, yr) {
-        df %>%
+    fwd_one_year <- function(retain_all, yr) {
+        retain_all %>%
             filter(.data$age_year == senior_age - 1) %>%
             mutate(age_year = .data$age_year + yr,
                    years_since = .data$years_since + yr)
@@ -78,9 +109,32 @@ wsfr_annual <- function(
         bind_rows()
 
     # calculate aid dollars for every year
-    retain_all %>%
-        bind_rows(retain_senior) %>%
+    bind_rows(retain_all, retain_senior) %>%
         mutate(wsfr_revenue = .data$pct * wsfr_amount)
+}
+
+#' @describeIn wsfr WSFR Aid for lifetime license scenario
+#' @export
+revenue_wsfr_lifetime <- function(
+    prices, wsfr_amount, min_amount, age_cutoff = 80
+) {
+    # determine years of wsfr revenue remaining by current_age
+    prices <- prices %>% mutate(yrs = wsfr_lifetime_yrs(
+        .data$price_lifetime, .data$current_age, min_amount, age_cutoff
+    ))
+
+    # cast out to future years
+    revenue_one_age <- function(prices, age = 16) {
+        x <- filter(prices, .data$current_age == age)
+        1:x$yrs %>%
+            sapply(function(i) mutate(x, years_since = i), simplify = FALSE) %>%
+            bind_rows() %>%
+            mutate(age_year = age + .data$years_since, wsfr_revenue = wsfr_amount) %>%
+            select(.data$current_age, .data$years_since, .data$age_year, .data$wsfr_revenue)
+    }
+    prices$current_age %>%
+        sapply(function(i) revenue_one_age(prices, i), simplify = FALSE) %>%
+        bind_rows()
 }
 
 #' @describeIn wsfr WSFR Aid for lifetime license scenario

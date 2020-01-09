@@ -7,6 +7,9 @@
     + need to use present_value_stream() in lifetime revenue calc
 - convert revenue computations to stream (cumulative revenue by year)
     + a decent amount of work, but probably a better approach (certainly more flexible)
+- drop old functions:
+    + wsfr_annual, wsfr_lifetime
+    + others
 - add vignettes (linked in README)
     + vignette-retention.md
     + (maybe) vignette-revenue.md

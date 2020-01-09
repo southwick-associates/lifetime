@@ -3,17 +3,24 @@
 \name{wsfr}
 \alias{wsfr}
 \alias{wsfr_annual}
+\alias{revenue_wsfr_annual}
+\alias{revenue_wsfr_lifetime}
 \alias{wsfr_lifetime}
 \title{Calculate WSFR Aid dollars by current age}
 \usage{
-wsfr_annual(retain_all, wsfr_amount, min_amount, senior_price,
+wsfr_annual(retain, wsfr_amount, min_amount, senior_price,
   senior_age = 65, age_cutoff = 80)
+
+revenue_wsfr_annual(retain_all, wsfr_amount, min_amount, senior_price,
+  senior_age = 65, age_cutoff = 80)
+
+revenue_wsfr_lifetime(prices, wsfr_amount, min_amount, age_cutoff = 80)
 
 wsfr_lifetime(prices, wsfr_amount, min_amount, age_cutoff = 80)
 }
 \arguments{
-\item{retain_all}{data frame of predicted years by age like that produced by
-\code{\link{nc_retain_all}}}
+\item{retain}{data frame of predicted years by age like that produced by
+\code{\link{nc_retain}}}
 
 \item{wsfr_amount}{numeric estimated amount for aid dollars (use SFRF for
 fishing, WRF for hunting)}
@@ -28,6 +35,9 @@ a cheap lifetime license}
 
 \item{age_cutoff}{numeric final age that can be counted for lifetime
 license-based WSFR dollars}
+
+\item{retain_all}{data frame of predicted years by age like that produced by
+\code{\link{nc_retain_all}}}
 
 \item{prices}{data frame of lifetime prices by age with at least
 2 variables: current_age and price_lifetime}
@@ -58,23 +68,36 @@ of points about WSFR aid predictions for lifetime license sales:
 
 This depends largely on the estimated number of years a license buyers will
 participate in the future. It also assumes by default that any remaining
+participants will buy a lifetime license at age 65.
+
+\item \code{revenue_wsfr_annual}: WSFR Aid for annual license scenario
+
+This depends largely on the estimated number of years a license buyers will
+participate in the future. It also assumes by default that any remaining
 participants will buy a lifetime license at senior_age.
+
+\item \code{revenue_wsfr_lifetime}: WSFR Aid for lifetime license scenario
 
 \item \code{wsfr_lifetime}: WSFR Aid for lifetime license scenario
 }}
 
 \examples{
+library(dplyr)
+library(ggplot2)
 data(retain_all)
-data(retain)
-aidA <- wsfr_annual(
-    retain_all, wsfr_amount = 16.65, min_amount = 2, senior_price = 15
-)
-prices <- data.frame(current_age = 16:63, price_lifetime = rep(250, 48))
-aidL <- wsfr_lifetime(prices, 16.65, 2)
 
-# TODO: update this once wsfr_lifetime() is updated
-# - note that I just broke downsream functionality...
-aidL$wsfr_revenue - aidA$wsfr_revenue
+# wsfr in annual scenario
+aid <- revenue_wsfr_annual(
+    retain_all, wsfr_amount = 16.65, min_amount = 4, senior_price = 15
+)
+filter(aid, current_age == 16) \%>\%
+    ggplot(aes(age_year, wsfr_revenue)) + geom_col()
+
+# wsfr in lifetime scenario
+prices <- data.frame(current_age = 16:63, price_lifetime = rep(250, 48))
+aid <- revenue_wsfr_lifetime(prices, wsfr_amount = 16.65, min_amount = 4)
+filter(aid, current_age == 16) \%>\%
+    ggplot(aes(age_year, wsfr_revenue)) + geom_col()
 }
 \seealso{
 Other estimating revenue: \code{\link{compound_interest}},
