@@ -134,16 +134,15 @@ nc_retain_youth <- function(retain_all, youth_ages = 0:15) {
 #' data(retain)
 #'
 #' # parameters
-#' price_annual <- 36
-#' price_lifetime <- 250
 #' senior_price <- 15 # lifetime license price at age 65
-#' wsfr_amount <- 16.65 # WSFR estimated aid amount per hunter
-#' min_amount <- 4 # WSFR minimum revenue for certified hunter calculations
+#' wsfr_amount <- 16.65 # WSFR estimated aid amount per sportsman
+#' min_amount <- 4 # WSFR minimum revenue for certified sportsman calculations
 #' return_life <- 0.05 # annual return to lifetime fund
 #' inflation <- 0.02 # inflation rate for fund depreciation
 #' prices <- tibble(
-#'     current_age = 0:63, price_lifetime = rep(price_lifetime, 64),
-#'     price_annual = rep(price_annual, 64)
+#'     current_age = 0:63,
+#'     price_lifetime = rep(250, 64),
+#'     price_annual = rep(36, 64)
 #' )
 #'
 #' # total revenue
@@ -173,13 +172,17 @@ nc_annual_stream <- function(
         retain_all <- nc_retain_youth(retain_all, youth_ages) %>%
             bind_rows(retain_all)
     }
-    retain_all %>%
-        wsfr_annual_stream(wsfr_amount, min_amount, senior_price,
-                            senior_age, age_cutoff) %>%
+    lic <- retain_all %>%
         left_join(prices, by = "current_age") %>%
-        mutate(lic_revenue = .data$price_annual * .data$pct) %>%
+        mutate(lic_revenue = .data$price_annual * .data$pct)
+    wsfr <- retain_all %>%
+        wsfr_annual_stream(wsfr_amount, min_amount, senior_price, senior_age, age_cutoff)
+
+    full_join(wsfr, lic, by = c("current_age", "age_year")) %>%
         select(.data$current_age, .data$age_year, contains("revenue")) %>%
-        tidyr::gather(stream, revenue_annual, .data$wsfr_revenue, .data$lic_revenue)
+        tidyr::gather(stream, revenue_annual, .data$wsfr_revenue, .data$lic_revenue) %>%
+        mutate(revenue_annual = ifelse(is.na(.data$revenue_annual), 0,
+                                       .data$revenue_annual))
 }
 
 #' @describeIn nc_revenue Total Revenue for annual scenario (Revenue|A)
@@ -198,7 +201,7 @@ nc_annual <- function(
         ungroup()
 }
 
-#' @describeIn nc_revenue Revenue for lifetime scenario (R|L)
+#' @describeIn nc_revenue Revenue for lifetime scenario (Revenue|L)
 #' @export
 nc_lifetime <- function(
     prices, wsfr_amount, min_amount, return_life, inflation,

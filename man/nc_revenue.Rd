@@ -68,7 +68,7 @@ Calculate revenue for annual vs lifetime scenarios
 
 Convenience function to aggregate stream of revenue to total across years
 
-\item \code{nc_lifetime}: Revenue for lifetime scenario (R|L)
+\item \code{nc_lifetime}: Revenue for lifetime scenario (Revenue|L)
 
 \item \code{nc_lifetime_stream}: Revenue for lifetime scenario (Revenue|L)
 }}
@@ -81,16 +81,15 @@ data(retain_all)
 data(retain)
 
 # parameters
-price_annual <- 36
-price_lifetime <- 250
 senior_price <- 15 # lifetime license price at age 65
-wsfr_amount <- 16.65 # WSFR estimated aid amount per hunter
-min_amount <- 4 # WSFR minimum revenue for certified hunter calculations
+wsfr_amount <- 16.65 # WSFR estimated aid amount per sportsman
+min_amount <- 4 # WSFR minimum revenue for certified sportsman calculations
 return_life <- 0.05 # annual return to lifetime fund
 inflation <- 0.02 # inflation rate for fund depreciation
 prices <- tibble(
-    current_age = 0:63, price_lifetime = rep(price_lifetime, 64),
-    price_annual = rep(price_annual, 64)
+    current_age = 0:63,
+    price_lifetime = rep(250, 64),
+    price_annual = rep(36, 64)
 )
 
 # total revenue
