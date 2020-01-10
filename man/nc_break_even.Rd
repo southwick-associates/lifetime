@@ -6,7 +6,7 @@
 \usage{
 nc_break_even(annual_revenue, wsfr_amount, min_amount, return_life,
   inflation, perpetuity = TRUE, ignore_wsfr = TRUE,
-  youth_ages = 0:15)
+  youth_ages = 0:15, age_cutoff = 80)
 }
 \arguments{
 \item{annual_revenue}{target revenue to solve lifetime break-even price}
@@ -30,6 +30,9 @@ certified hunter/angler (use 2 for hunt/fish and 4 for combo)}
 \item{youth_ages}{if not NULL, assumes for youths that the fund is able to
 compound until adulthood (when the agency will begin drawing revenue). See
 \code{\link{nc_price_lifetime_youth}} for details.}
+
+\item{age_cutoff}{numeric final age that can be counted for lifetime
+license-based WSFR dollars}
 }
 \description{
 This uses a solver function, \code{\link[stats]{uniroot}}, to find break-even
@@ -41,6 +44,7 @@ prices for lifetime licenses given predicted annual revenue.
 \seealso{
 Other wrapper functions for NC results: \code{\link{nc_break_even_yrs}},
   \code{\link{nc_price_lifetime_youth}},
-  \code{\link{nc_retain}}, \code{\link{nc_revenue}}
+  \code{\link{nc_retain_youth}}, \code{\link{nc_retain}},
+  \code{\link{nc_revenue}}
 }
 \concept{wrapper functions for NC results}

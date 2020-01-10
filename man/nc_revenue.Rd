@@ -2,28 +2,29 @@
 % Please edit documentation in R/nc-results.R
 \name{nc_revenue}
 \alias{nc_revenue}
-\alias{nc_revenue_annual}
 \alias{nc_annual_stream}
-\alias{nc_retain_youth}
-\alias{nc_revenue_lifetime}
+\alias{nc_annual}
+\alias{nc_lifetime}
 \alias{nc_lifetime_stream}
 \title{Calculate revenue for annual vs lifetime scenarios}
 \usage{
-nc_revenue_annual(retain, prices, wsfr_amount, min_amount, senior_price,
-  senior_age = 65, age_cutoff = 80, youth_ages = 0:15)
-
 nc_annual_stream(retain_all, prices, wsfr_amount, min_amount, senior_price,
   senior_age = 65, age_cutoff = 80, youth_ages = 0:15)
 
-nc_retain_youth(retain_all, youth_ages = 0:15)
+nc_annual(retain_all, prices, wsfr_amount, min_amount, senior_price,
+  senior_age = 65, age_cutoff = 80, youth_ages = 0:15)
 
-nc_revenue_lifetime(prices, wsfr_amount, min_amount, return_life,
-  inflation, perpetuity = TRUE, youth_ages = 0:15)
+nc_lifetime(prices, wsfr_amount, min_amount, return_life, inflation,
+  perpetuity = TRUE, youth_ages = 0:15, age_cutoff = 80,
+  fund_years = 0:50)
 
 nc_lifetime_stream(prices, wsfr_amount, min_amount, return_life, inflation,
-  fund_yrs = 0:100, youth_ages = 0:15)
+  fund_years = 0:500, youth_ages = 0:15, age_cutoff = 80)
 }
 \arguments{
+\item{retain_all}{data frame of predicted years by age like that produced by
+\code{\link{nc_retain_all}}}
+
 \item{prices}{data frame of lifetime prices by age with at least
 2 variables: current_age and price_lifetime}
 
@@ -45,9 +46,6 @@ license-based WSFR dollars}
 compound until adulthood (when the agency will begin drawing revenue). See
 \code{\link{nc_price_lifetime_youth}} for details.}
 
-\item{retain_all}{data frame of predicted years by age like that produced by
-\code{\link{nc_retain_all}}}
-
 \item{return_life}{percentage return from lifetime fund}
 
 \item{inflation}{inflation rate for depreciation of lifetime fund}
@@ -55,19 +53,22 @@ compound until adulthood (when the agency will begin drawing revenue). See
 \item{perpetuity}{if TRUE, use a perpetuity calculation
 (\url{https://en.wikipedia.org/wiki/Perpetuity}) instead of
 \code{\link{present_value}}}
+
+\item{fund_years}{range of years to cast forward for stream-based lifetime
+fund valuation}
 }
 \description{
 Calculate revenue for annual vs lifetime scenarios
 }
 \section{Functions}{
 \itemize{
-\item \code{nc_revenue_annual}: Revenue for annual scenario (R|A)
+\item \code{nc_annual_stream}: Stream of Revenue for annual scenario (Revenue|A)
 
-\item \code{nc_annual_stream}: Revenue for annual scenario (Revenue|A)
+\item \code{nc_annual}: Total Revenue for annual scenario (Revenue|A)
 
-\item \code{nc_retain_youth}: Simulate retention curves for youths
+Convenience function to aggregate stream of revenue to total across years
 
-\item \code{nc_revenue_lifetime}: Revenue for lifetime scenario (R|L)
+\item \code{nc_lifetime}: Revenue for lifetime scenario (R|L)
 
 \item \code{nc_lifetime_stream}: Revenue for lifetime scenario (Revenue|L)
 }}
@@ -75,6 +76,8 @@ Calculate revenue for annual vs lifetime scenarios
 \examples{
 library(dplyr)
 library(ggplot2)
+
+data(retain_all)
 data(retain)
 
 # parameters
@@ -90,38 +93,26 @@ prices <- tibble(
     price_annual = rep(price_annual, 64)
 )
 
-# annual
-annual <- retain \%>\%
-    nc_revenue_annual(prices, wsfr_amount, min_amount, senior_price)
+# total revenue
+annual <- nc_annual(retain_all, prices, wsfr_amount, min_amount, senior_price)
 ggplot(annual, aes(current_age, revenue_annual, fill = stream)) + geom_col()
 
-# lifetime
-lifetime <- prices \%>\%
-    nc_revenue_lifetime(wsfr_amount, min_amount, return_life, inflation)
-ggplot(lifetime, aes(current_age, revenue_lifetime, fill = stream)) +
-    geom_col()
-
-# compare
-left_join(lifetime, annual, by = c("current_age", "stream")) \%>\%
-    mutate(revenue_effect = revenue_lifetime - revenue_annual) \%>\%
-    ggplot(aes(current_age, revenue_effect, fill = stream)) +
-    geom_col()
+lifetime <- nc_lifetime(prices, wsfr_amount, min_amount, return_life, inflation)
+ggplot(lifetime, aes(current_age, revenue_lifetime, fill = stream)) + geom_col()
 
 # break-even
 x <- nc_break_even(annual, wsfr_amount, min_amount, return_life, inflation)
 ggplot(x, aes(current_age, break_even)) + geom_line()
 
-x <- nc_break_even(annual, wsfr_amount, min_amount, return_life, inflation,
-                   ignore_wsfr = FALSE)
-ggplot(x, aes(current_age, break_even)) + geom_line()
-
-# years to break-even
-
+# TODO: start here
+# years to break-even (using revenue stream calculations)
+nc_annual_stream(retain_all, prices, wsfr_amount, min_amount, senior_price)
+nc_lifetime_stream(prices, wsfr_amount, min_amount, return_life, inflation)
 }
 \seealso{
 Other wrapper functions for NC results: \code{\link{nc_break_even_yrs}},
   \code{\link{nc_break_even}},
   \code{\link{nc_price_lifetime_youth}},
-  \code{\link{nc_retain}}
+  \code{\link{nc_retain_youth}}, \code{\link{nc_retain}}
 }
 \concept{wrapper functions for NC results}

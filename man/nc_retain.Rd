@@ -63,6 +63,6 @@ yrs_plot(retain) + geom_point(data = observe) +
 Other wrapper functions for NC results: \code{\link{nc_break_even_yrs}},
   \code{\link{nc_break_even}},
   \code{\link{nc_price_lifetime_youth}},
-  \code{\link{nc_revenue}}
+  \code{\link{nc_retain_youth}}, \code{\link{nc_revenue}}
 }
 \concept{wrapper functions for NC results}

@@ -42,7 +42,8 @@ ggplot(prices, aes(current_age, price_lifetime)) +
 }
 \seealso{
 Other wrapper functions for NC results: \code{\link{nc_break_even_yrs}},
-  \code{\link{nc_break_even}}, \code{\link{nc_retain}},
+  \code{\link{nc_break_even}},
+  \code{\link{nc_retain_youth}}, \code{\link{nc_retain}},
   \code{\link{nc_revenue}}
 }
 \concept{wrapper functions for NC results}
