@@ -2,25 +2,25 @@
 % Please edit documentation in R/revenue.R
 \name{wsfr}
 \alias{wsfr}
+\alias{wsfr_annual_stream}
 \alias{wsfr_annual}
-\alias{revenue_wsfr_annual}
-\alias{revenue_wsfr_lifetime}
+\alias{wsfr_lifetime_stream}
 \alias{wsfr_lifetime}
 \title{Calculate WSFR Aid dollars by current age}
 \usage{
-wsfr_annual(retain, wsfr_amount, min_amount, senior_price,
+wsfr_annual_stream(retain_all, wsfr_amount, min_amount, senior_price,
   senior_age = 65, age_cutoff = 80)
 
-revenue_wsfr_annual(retain_all, wsfr_amount, min_amount, senior_price,
+wsfr_annual(retain_all, wsfr_amount, min_amount, senior_price,
   senior_age = 65, age_cutoff = 80)
 
-revenue_wsfr_lifetime(prices, wsfr_amount, min_amount, age_cutoff = 80)
+wsfr_lifetime_stream(prices, wsfr_amount, min_amount, age_cutoff = 80)
 
 wsfr_lifetime(prices, wsfr_amount, min_amount, age_cutoff = 80)
 }
 \arguments{
-\item{retain}{data frame of predicted years by age like that produced by
-\code{\link{nc_retain}}}
+\item{retain_all}{data frame of predicted years by age like that produced by
+\code{\link{nc_retain_all}}}
 
 \item{wsfr_amount}{numeric estimated amount for aid dollars (use SFRF for
 fishing, WRF for hunting)}
@@ -35,9 +35,6 @@ a cheap lifetime license}
 
 \item{age_cutoff}{numeric final age that can be counted for lifetime
 license-based WSFR dollars}
-
-\item{retain_all}{data frame of predicted years by age like that produced by
-\code{\link{nc_retain_all}}}
 
 \item{prices}{data frame of lifetime prices by age with at least
 2 variables: current_age and price_lifetime}
@@ -64,21 +61,22 @@ of points about WSFR aid predictions for lifetime license sales:
 }
 \section{Functions}{
 \itemize{
-\item \code{wsfr_annual}: WSFR Aid for annual license scenario
+\item \code{wsfr_annual_stream}: Stream of WSFR Aid for annual license scenario
 
 This depends largely on the estimated number of years a license buyers will
 participate in the future. It also assumes by default that any remaining
-participants will buy a lifetime license at age 65.
+participants will buy a lifetime license at senior_age. The stream calculation
+forcasts aid for relevant future years.
 
-\item \code{revenue_wsfr_annual}: WSFR Aid for annual license scenario
+\item \code{wsfr_annual}: Total WSFR Aid for annual license scenario
 
-This depends largely on the estimated number of years a license buyers will
-participate in the future. It also assumes by default that any remaining
-participants will buy a lifetime license at senior_age.
+Convenience function to aggregate stream of revenue to total across years
 
-\item \code{revenue_wsfr_lifetime}: WSFR Aid for lifetime license scenario
+\item \code{wsfr_lifetime_stream}: WSFR Aid for lifetime license scenario
 
 \item \code{wsfr_lifetime}: WSFR Aid for lifetime license scenario
+
+Convenience function to aggregate stream of revenue to total across years
 }}
 
 \examples{
@@ -86,18 +84,17 @@ library(dplyr)
 library(ggplot2)
 data(retain_all)
 
-# wsfr in annual scenario
-aid <- revenue_wsfr_annual(
+# annual scenario
+aidA <- wsfr_annual(
     retain_all, wsfr_amount = 16.65, min_amount = 4, senior_price = 15
 )
-filter(aid, current_age == 16) \%>\%
-    ggplot(aes(age_year, wsfr_revenue)) + geom_col()
 
-# wsfr in lifetime scenario
-prices <- data.frame(current_age = 16:63, price_lifetime = rep(250, 48))
-aid <- revenue_wsfr_lifetime(prices, wsfr_amount = 16.65, min_amount = 4)
-filter(aid, current_age == 16) \%>\%
-    ggplot(aes(age_year, wsfr_revenue)) + geom_col()
+# lifetime scenario
+prices <- tibble(current_age = 16:63, price_lifetime = rep(250, 48))
+aidL <- wsfr_lifetime(prices, wsfr_amount = 16.65, min_amount = 4)
+
+# there are large predicted differences in wsfr revenue outcomes
+aidL$wsfr_revenue - aidA$wsfr_revenue
 }
 \seealso{
 Other estimating revenue: \code{\link{compound_interest}},

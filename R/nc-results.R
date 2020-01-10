@@ -188,7 +188,9 @@ nc_annual_stream <- function(
 }
 
 # TODO: replace nc_revenue_annual with this function, same output
-nc_annual <- function() {
+nc_annual <- function(
+
+) {
     # can be mostly a wrapper for nc_annual_stream()
     # or just take the output of that function as input
 }

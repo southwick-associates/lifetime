@@ -24,8 +24,6 @@
 #'   \href{https://www.law.cornell.edu/cfr/text/50/80.34}{section 34} bullet A
 #' }
 #'
-#' @param retain data frame of predicted years by age like that produced by
-#' \code{\link{nc_retain}}
 #' @param retain_all data frame of predicted years by age like that produced by
 #' \code{\link{nc_retain_all}}
 #' @param wsfr_amount numeric estimated amount for aid dollars (use SFRF for
@@ -46,51 +44,27 @@
 #' library(ggplot2)
 #' data(retain_all)
 #'
-#' # wsfr in annual scenario
-#' aid <- revenue_wsfr_annual(
+#' # annual scenario
+#' aidA <- wsfr_annual(
 #'     retain_all, wsfr_amount = 16.65, min_amount = 4, senior_price = 15
 #' )
-#' filter(aid, current_age == 16) %>%
-#'     ggplot(aes(age_year, wsfr_revenue)) + geom_col()
 #'
-#' # wsfr in lifetime scenario
-#' prices <- data.frame(current_age = 16:63, price_lifetime = rep(250, 48))
-#' aid <- revenue_wsfr_lifetime(prices, wsfr_amount = 16.65, min_amount = 4)
-#' filter(aid, current_age == 16) %>%
-#'     ggplot(aes(age_year, wsfr_revenue)) + geom_col()
+#' # lifetime scenario
+#' prices <- tibble(current_age = 16:63, price_lifetime = rep(250, 48))
+#' aidL <- wsfr_lifetime(prices, wsfr_amount = 16.65, min_amount = 4)
+#'
+#' # there are large predicted differences in wsfr revenue outcomes
+#' aidL$wsfr_revenue - aidA$wsfr_revenue
 NULL
 
-#' @describeIn wsfr WSFR Aid for annual license scenario
+#' @describeIn wsfr Stream of WSFR Aid for annual license scenario
 #'
 #' This depends largely on the estimated number of years a license buyers will
 #' participate in the future. It also assumes by default that any remaining
-#' participants will buy a lifetime license at age 65.
+#' participants will buy a lifetime license at senior_age. The stream calculation
+#' forcasts aid for relevant future years.
 #' @export
-wsfr_annual <- function(
-    retain, wsfr_amount, min_amount, senior_price,
-    senior_age = 65, age_cutoff = 80
-) {
-    wsfr_aid <- retain %>% mutate(
-        annual_revenue = .data$yrs * wsfr_amount,
-        # additional aid revenue accrues when a senior lifetime lic is bought
-        # - the number of years is limited by the USFWS formula
-        senior_years = wsfr_lifetime_yrs(senior_price, senior_age, min_amount,
-                                         age_cutoff),
-        # - only a fraction of buyers will still be participating as seniors
-        senior_revenue = .data$senior_years * wsfr_amount * .data$last_pct,
-        wsfr_revenue = .data$annual_revenue + .data$senior_revenue
-    ) %>%
-        select(.data$current_age, .data$wsfr_revenue)
-    left_join(retain, wsfr_aid, by = "current_age")
-}
-
-#' @describeIn wsfr WSFR Aid for annual license scenario
-#'
-#' This depends largely on the estimated number of years a license buyers will
-#' participate in the future. It also assumes by default that any remaining
-#' participants will buy a lifetime license at senior_age.
-#' @export
-revenue_wsfr_annual <- function(
+wsfr_annual_stream <- function(
     retain_all, wsfr_amount, min_amount, senior_price,
     senior_age = 65, age_cutoff = 80
 ) {
@@ -98,6 +72,7 @@ revenue_wsfr_annual <- function(
     num_yrs <- wsfr_lifetime_yrs(
         senior_price, senior_age, min_amount, age_cutoff
     )
+    # the senior aid years will be combined with retain_all
     fwd_one_year <- function(retain_all, yr) {
         retain_all %>%
             filter(.data$age_year == senior_age - 1) %>%
@@ -113,9 +88,24 @@ revenue_wsfr_annual <- function(
         mutate(wsfr_revenue = .data$pct * wsfr_amount)
 }
 
+#' @describeIn wsfr Total WSFR Aid for annual license scenario
+#'
+#' Convenience function to aggregate stream of revenue to total across years
+#' @export
+wsfr_annual <- function(
+    retain_all, wsfr_amount, min_amount, senior_price,
+    senior_age = 65, age_cutoff = 80
+) {
+    retain_all %>%
+        wsfr_annual_stream(wsfr_amount, min_amount, senior_price, senior_age,
+                           age_cutoff) %>%
+        group_by(.data$current_age) %>%
+        summarise(yrs = sum(.data$pct), wsfr_revenue = sum(.data$wsfr_revenue))
+}
+
 #' @describeIn wsfr WSFR Aid for lifetime license scenario
 #' @export
-revenue_wsfr_lifetime <- function(
+wsfr_lifetime_stream <- function(
     prices, wsfr_amount, min_amount, age_cutoff = 80
 ) {
     # determine years of wsfr revenue remaining by current_age
@@ -138,15 +128,16 @@ revenue_wsfr_lifetime <- function(
 }
 
 #' @describeIn wsfr WSFR Aid for lifetime license scenario
+#'
+#' Convenience function to aggregate stream of revenue to total across years
 #' @export
 wsfr_lifetime <- function(
     prices, wsfr_amount, min_amount, age_cutoff = 80
 ) {
-    prices %>% mutate(
-        yrs = wsfr_lifetime_yrs(.data$price_lifetime, .data$current_age,
-                                min_amount, age_cutoff),
-        wsfr_revenue = .data$yrs * wsfr_amount
-    )
+    prices %>%
+        wsfr_lifetime_stream(wsfr_amount, min_amount, age_cutoff) %>%
+        group_by(.data$current_age) %>%
+        summarise(yrs = n(), wsfr_revenue = sum(.data$wsfr_revenue))
 }
 
 #' Calculate the number of years to count WSFR dollars with lifetime sales

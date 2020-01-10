@@ -3,26 +3,27 @@
 \name{nc_revenue}
 \alias{nc_revenue}
 \alias{nc_revenue_annual}
-\alias{nc_revenue_annual2}
+\alias{nc_annual_stream}
 \alias{nc_retain_youth}
 \alias{nc_revenue_lifetime}
+\alias{nc_lifetime_stream}
 \title{Calculate revenue for annual vs lifetime scenarios}
 \usage{
 nc_revenue_annual(retain, prices, wsfr_amount, min_amount, senior_price,
   senior_age = 65, age_cutoff = 80, youth_ages = 0:15)
 
-nc_revenue_annual2(retain_all, prices, wsfr_amount, min_amount,
-  senior_price, senior_age = 65, age_cutoff = 80, youth_ages = 0:15)
+nc_annual_stream(retain_all, prices, wsfr_amount, min_amount, senior_price,
+  senior_age = 65, age_cutoff = 80, youth_ages = 0:15)
 
 nc_retain_youth(retain_all, youth_ages = 0:15)
 
 nc_revenue_lifetime(prices, wsfr_amount, min_amount, return_life,
   inflation, perpetuity = TRUE, youth_ages = 0:15)
+
+nc_lifetime_stream(prices, wsfr_amount, min_amount, return_life, inflation,
+  fund_yrs = 0:100, youth_ages = 0:15)
 }
 \arguments{
-\item{retain}{data frame of predicted years by age like that produced by
-\code{\link{nc_retain}}}
-
 \item{prices}{data frame of lifetime prices by age with at least
 2 variables: current_age and price_lifetime}
 
@@ -62,11 +63,13 @@ Calculate revenue for annual vs lifetime scenarios
 \itemize{
 \item \code{nc_revenue_annual}: Revenue for annual scenario (R|A)
 
-\item \code{nc_revenue_annual2}: Revenue for annual scenario (Revenue|A)
+\item \code{nc_annual_stream}: Revenue for annual scenario (Revenue|A)
 
 \item \code{nc_retain_youth}: Simulate retention curves for youths
 
 \item \code{nc_revenue_lifetime}: Revenue for lifetime scenario (R|L)
+
+\item \code{nc_lifetime_stream}: Revenue for lifetime scenario (Revenue|L)
 }}
 
 \examples{
@@ -79,7 +82,7 @@ price_annual <- 36
 price_lifetime <- 250
 senior_price <- 15 # lifetime license price at age 65
 wsfr_amount <- 16.65 # WSFR estimated aid amount per hunter
-min_amount <- 2 # WSFR minimum revenue for certified hunter calculations
+min_amount <- 4 # WSFR minimum revenue for certified hunter calculations
 return_life <- 0.05 # annual return to lifetime fund
 inflation <- 0.02 # inflation rate for fund depreciation
 prices <- tibble(
