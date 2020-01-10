@@ -6,7 +6,7 @@
 \usage{
 nc_break_even(annual_revenue, wsfr_amount, min_amount, return_life,
   inflation, perpetuity = TRUE, ignore_wsfr = TRUE,
-  youth_ages = 0:15, age_cutoff = 80)
+  youth_ages = 0:15, age_cutoff = 80, max_price = 1000)
 }
 \arguments{
 \item{annual_revenue}{target revenue to solve lifetime break-even price}
@@ -33,6 +33,9 @@ compound until adulthood (when the agency will begin drawing revenue). See
 
 \item{age_cutoff}{numeric final age that can be counted for lifetime
 license-based WSFR dollars}
+
+\item{max_price}{Maximum lifetime license price used in solver function. A
+lower number will allow the function to execute more quickly.}
 }
 \description{
 This uses a solver function, \code{\link[stats]{uniroot}}, to find break-even

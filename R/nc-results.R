@@ -323,13 +323,16 @@ nc_price_lifetime_youth <- function(
 #' @inheritParams nc_revenue
 #' @param annual_revenue target revenue to solve lifetime break-even price
 #' @param ignore_wsfr if TRUE, don't include WSFR dollars in break-even price
+#' @param max_price Maximum lifetime license price used in solver function. A
+#' lower number will allow the function to execute more quickly.
 #' @family wrapper functions for NC results
 #' @export
 #' @examples
 #' # see ?nc_revenue for an example
 nc_break_even <- function(
     annual_revenue, wsfr_amount, min_amount, return_life, inflation,
-    perpetuity = TRUE, ignore_wsfr = TRUE, youth_ages = 0:15, age_cutoff = 80
+    perpetuity = TRUE, ignore_wsfr = TRUE, youth_ages = 0:15, age_cutoff = 80,
+    max_price = 1000
 ) {
     revenue <- annual_revenue
     if (ignore_wsfr) {
@@ -345,11 +348,11 @@ nc_break_even <- function(
             nc_lifetime(wsfr_amount, min_amount, return_life, inflation,
                         perpetuity, youth_ages, age_cutoff)
         if (ignore_wsfr) lifetime <- filter(lifetime, .data$stream == "lic_revenue")
-        sum(lifetime$revenue_lifetime) - sum(annual$revenue_annual)
+        abs(sum(lifetime$revenue_lifetime) - sum(annual$revenue_annual))
     }
     # - get break-even price for given age
-    break_even <- function(age) {
-        stats::uniroot(revenue_effect, interval = c(-10000, 10000), age = age)$root
+    break_even <- function(slct_age) {
+        stats::optimize(revenue_effect, c(0, max_price), age = slct_age)$minimum
     }
     # - apply across all ages
     break_even <- sapply(ages, break_even)
