@@ -248,10 +248,12 @@ present_value_stream <- function(p0, r, t, d, n = 1) {
 
     # annual return (of inflation-adjusted principal)
     # - annual compounding
-    ret <- cumsum(val * r)
+    ann_return <- val * r
+    cum_return <- cumsum(val * r)
 
     # output in tabular format
-    tibble(year = t, value = val, cumulative_return = ret) %>%
+    tibble(year = t, value = val, cumulative_return = cum_return,
+           return = ann_return) %>%
         mutate(year = year + 1) # consistent with spreadsheet numbering
 }
 

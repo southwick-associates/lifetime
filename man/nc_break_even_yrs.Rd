@@ -4,23 +4,55 @@
 \alias{nc_break_even_yrs}
 \title{Calculate number of years it takes to break even (if ever)}
 \usage{
-nc_break_even_yrs(annual_revenue, lifetime_revenue, ignore_wsfr = TRUE)
+nc_break_even_yrs(retain_all, prices, senior_price, wsfr_amount,
+  min_amount, return_life, inflation, ignore_wsfr = TRUE,
+  youth_ages = 0:15, age_cutoff = 80, fund_years = 1:200,
+  senior_age = 65)
 }
 \arguments{
-\item{annual_revenue}{target revenue to solve lifetime break-even price}
+\item{retain_all}{data frame of predicted years by age like that produced by
+\code{\link{nc_retain_all}}}
 
-\item{lifetime_revenue}{revenue for lifetime scenario}
+\item{prices}{data frame of lifetime prices by age with at least
+2 variables: current_age and price_lifetime}
+
+\item{senior_price}{numeric price for a senior lifetime license}
+
+\item{wsfr_amount}{numeric estimated amount for aid dollars (use SFRF for
+fishing, WRF for hunting)}
+
+\item{min_amount}{numeric the minimum expenditure that will count for a
+certified hunter/angler (use 2 for hunt/fish and 4 for combo)}
+
+\item{return_life}{percentage return from lifetime fund}
+
+\item{inflation}{inflation rate for depreciation of lifetime fund}
 
 \item{ignore_wsfr}{if TRUE, don't include WSFR dollars in break-even price}
+
+\item{youth_ages}{if not NULL, assumes for youths that the fund is able to
+compound until adulthood (when the agency will begin drawing revenue). See
+\code{\link{nc_price_lifetime_youth}} for details.}
+
+\item{age_cutoff}{numeric final age that can be counted for lifetime
+license-based WSFR dollars}
+
+\item{fund_years}{range of years to cast forward for stream-based lifetime
+fund valuation}
+
+\item{senior_age}{numeric age when a participant will be expected to buy
+a cheap lifetime license}
 }
 \description{
 Generally it will take some number of years for cumulative revenue in
 the lifetime scenario to catch up with cumulative revenue in the annual
 scenario. If the lifetime scenario does catch up, the years to break even
-represents the number of years it takes for this to happen.
+represents the number of years it takes for this to happen. Only rows (ages)
+where the current price is above the break-even price will be returned
+(otherwise to lifetime return will never reach the annual return scenario).
 }
 \examples{
-# see ?nc_revenue for an example
+# see ?nc_revenue
 }
 \seealso{
 Other wrapper functions for NC results: \code{\link{nc_break_even}},

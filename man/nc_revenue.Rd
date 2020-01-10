@@ -66,11 +66,11 @@ Calculate revenue for annual vs lifetime scenarios
 
 \item \code{nc_annual}: Total Revenue for annual scenario (Revenue|A)
 
-Convenience function to aggregate stream of revenue to total across years
+Convenience function to pull total revenue across all years
 
 \item \code{nc_lifetime}: Revenue for lifetime scenario (Revenue|L)
 
-\item \code{nc_lifetime_stream}: Revenue for lifetime scenario (Revenue|L)
+\item \code{nc_lifetime_stream}: Stream of Revenue for lifetime scenario (Revenue|L)
 }}
 
 \examples{
@@ -103,10 +103,10 @@ ggplot(lifetime, aes(current_age, revenue_lifetime, fill = stream)) + geom_col()
 x <- nc_break_even(annual, wsfr_amount, min_amount, return_life, inflation)
 ggplot(x, aes(current_age, break_even)) + geom_line()
 
-# TODO: start here
 # years to break-even (using revenue stream calculations)
-nc_annual_stream(retain_all, prices, wsfr_amount, min_amount, senior_price)
-nc_lifetime_stream(prices, wsfr_amount, min_amount, return_life, inflation)
+x <- nc_break_even_yrs(retain_all, prices, senior_price, wsfr_amount,
+                       min_amount, return_life, inflation)
+ggplot(x, aes(current_age, yrs_to_break_even)) + geom_col()
 }
 \seealso{
 Other wrapper functions for NC results: \code{\link{nc_break_even_yrs}},

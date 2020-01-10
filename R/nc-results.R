@@ -101,9 +101,10 @@ nc_retain_youth <- function(retain_all, youth_ages = 0:15) {
 
     youth_ages %>%
         sapply(function(i) {
-            tibble(age_year = (i+1):adult_age) %>%
-                mutate(pct = 0, years_since = row_number()) %>%
+            tibble(age_year = (i):(adult_age-1)) %>%
+                mutate(pct = 0) %>%
                 bind_rows(first_adult) %>%
+                mutate(years_since = row_number()) %>%
                 mutate(current_age = i)
         }, simplify = FALSE) %>%
         bind_rows()
@@ -156,10 +157,10 @@ nc_retain_youth <- function(retain_all, youth_ages = 0:15) {
 #' x <- nc_break_even(annual, wsfr_amount, min_amount, return_life, inflation)
 #' ggplot(x, aes(current_age, break_even)) + geom_line()
 #'
-#' # TODO: start here
 #' # years to break-even (using revenue stream calculations)
-#' nc_annual_stream(retain_all, prices, wsfr_amount, min_amount, senior_price)
-#' nc_lifetime_stream(prices, wsfr_amount, min_amount, return_life, inflation)
+#' x <- nc_break_even_yrs(retain_all, prices, senior_price, wsfr_amount,
+#'                        min_amount, return_life, inflation)
+#' ggplot(x, aes(current_age, yrs_to_break_even)) + geom_col()
 NULL
 
 #' @describeIn nc_revenue Stream of Revenue for annual scenario (Revenue|A)
@@ -168,6 +169,7 @@ nc_annual_stream <- function(
     retain_all, prices, wsfr_amount, min_amount, senior_price,
     senior_age = 65, age_cutoff = 80, youth_ages = 0:15
 ) {
+    # calculate license & wsfr revenue
     if (!is.null(youth_ages)) {
         retain_all <- nc_retain_youth(retain_all, youth_ages) %>%
             bind_rows(retain_all)
@@ -178,7 +180,8 @@ nc_annual_stream <- function(
     wsfr <- retain_all %>%
         wsfr_annual_stream(wsfr_amount, min_amount, senior_price, senior_age, age_cutoff)
 
-    full_join(wsfr, lic, by = c("current_age", "age_year")) %>%
+    # combine & reshape
+    revenue <- full_join(wsfr, lic, by = c("current_age", "age_year")) %>%
         select(.data$current_age, .data$age_year, contains("revenue")) %>%
         tidyr::gather(stream, revenue_annual, .data$wsfr_revenue, .data$lic_revenue) %>%
         mutate(revenue_annual = ifelse(is.na(.data$revenue_annual), 0,
@@ -187,7 +190,7 @@ nc_annual_stream <- function(
 
 #' @describeIn nc_revenue Total Revenue for annual scenario (Revenue|A)
 #'
-#' Convenience function to aggregate stream of revenue to total across years
+#' Convenience function to pull total revenue across all years
 #' @export
 nc_annual <- function(
     retain_all, prices, wsfr_amount, min_amount, senior_price,
@@ -231,7 +234,7 @@ nc_lifetime <- function(
         select(.data$current_age, .data$stream, .data$revenue_lifetime)
 }
 
-#' @describeIn nc_revenue Revenue for lifetime scenario (Revenue|L)
+#' @describeIn nc_revenue Stream of Revenue for lifetime scenario (Revenue|L)
 #' @export
 nc_lifetime_stream <- function(
     prices, wsfr_amount, min_amount, return_life, inflation,
@@ -254,7 +257,7 @@ nc_lifetime_stream <- function(
                 age_year = .data$current_age + .data$year
             ) %>%
             select(.data$current_age, .data$age_year,
-                   lic_revenue = .data$cumulative_return)
+                   lic_revenue = .data$return)
     }
     fund <- 1:nrow(prices) %>%
         sapply(function(row) revenue_one_age(row), simplify = FALSE) %>%
@@ -366,21 +369,61 @@ nc_break_even <- function(
 #' Generally it will take some number of years for cumulative revenue in
 #' the lifetime scenario to catch up with cumulative revenue in the annual
 #' scenario. If the lifetime scenario does catch up, the years to break even
-#' represents the number of years it takes for this to happen.
+#' represents the number of years it takes for this to happen. Only rows (ages)
+#' where the current price is above the break-even price will be returned
+#' (otherwise to lifetime return will never reach the annual return scenario).
 #'
 #' @inheritParams nc_break_even
-#' @param lifetime_revenue revenue for lifetime scenario
+#' @inheritParams nc_revenue
 #' @family wrapper functions for NC results
 #' @export
 #' @examples
-#' # see ?nc_revenue for an example
+#' # see ?nc_revenue
 nc_break_even_yrs <- function(
-    annual_revenue, lifetime_revenue, ignore_wsfr = TRUE
+    retain_all, prices, senior_price, wsfr_amount, min_amount, return_life, inflation,
+    ignore_wsfr = TRUE, youth_ages = 0:15, age_cutoff = 80, fund_years = 1:200,
+    senior_age = 65
 ) {
-    revenue <- annual_revenue %>%
-        inner_join(lifetime_revenue, by = c("current_age", "stream"))
-    if (ignore_wsfr) {
-        revenue <- filter(revenue, .data$stream == "lic_revenue")
-    }
+    # calculate revenue streams
+    annual <- nc_annual_stream(
+        retain_all, prices, wsfr_amount, min_amount, senior_price,
+        senior_age, age_cutoff, youth_ages
+    )
+    lifetime <- nc_lifetime_stream(
+        prices, wsfr_amount, min_amount, return_life, inflation,
+        fund_years, youth_ages, age_cutoff
+    )
 
+    # combine
+    if (ignore_wsfr) {
+        annual <- filter(annual, .data$stream != "wsfr_revenue")
+        lifetime <- filter(lifetime, .data$stream != "wsfr_revenue")
+    }
+    revenue <- full_join(
+        group_by(annual, .data$current_age, .data$age_year) %>%
+            summarise(revenue_annual = sum(.data$revenue_annual)) %>%
+            ungroup(),
+        group_by(lifetime, .data$current_age, .data$age_year) %>%
+            summarise(revenue_lifetime = sum(.data$revenue_lifetime)) %>%
+            ungroup(),
+        by = c("current_age", "age_year")
+    )
+
+    # calculate cumulative revenue
+    na_to_zero <- function(x) ifelse(is.na(x), 0, x)
+    revenue <- revenue %>%
+        mutate_at(c("revenue_annual", "revenue_lifetime"), "na_to_zero") %>%
+        arrange(.data$current_age, .data$age_year) %>%
+        group_by(.data$current_age) %>%
+        mutate_at(c("revenue_annual", "revenue_lifetime"), "cumsum") %>%
+        ungroup()
+
+    # determine first year where lifetime > annual (if ever)
+    revenue %>%
+        filter(revenue_lifetime > revenue_annual) %>%
+        arrange(.data$current_age, .data$age_year) %>%
+        group_by(.data$current_age) %>%
+        slice(1L) %>%
+        ungroup() %>%
+        mutate(yrs_to_break_even = .data$age_year - .data$current_age)
 }
