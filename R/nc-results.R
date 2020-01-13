@@ -181,7 +181,7 @@ nc_annual_stream <- function(
         wsfr_annual_stream(wsfr_amount, min_amount, senior_price, senior_age, age_cutoff)
 
     # combine & reshape
-    revenue <- full_join(wsfr, lic, by = c("current_age", "age_year")) %>%
+    full_join(wsfr, lic, by = c("current_age", "age_year")) %>%
         select(.data$current_age, .data$age_year, contains("revenue")) %>%
         tidyr::gather(stream, revenue_annual, .data$wsfr_revenue, .data$lic_revenue) %>%
         mutate(revenue_annual = ifelse(is.na(.data$revenue_annual), 0,
