@@ -6,7 +6,7 @@
 \usage{
 nc_break_even_yrs(retain_all, prices, senior_price, wsfr_amount,
   min_amount, return_life, inflation, ignore_wsfr = TRUE,
-  youth_ages = 0:15, age_cutoff = 80, fund_years = 1:200,
+  youth_ages = 0:15, age_cutoff = 80, fund_years = 0:200,
   senior_age = 65)
 }
 \arguments{
