@@ -150,8 +150,13 @@ nc_retain_youth <- function(retain_all, youth_ages = 0:15) {
 #' annual <- nc_annual(retain_all, prices, wsfr_amount, min_amount, senior_price)
 #' ggplot(annual, aes(current_age, revenue_annual, fill = stream)) + geom_col()
 #'
-#' lifetime <- nc_lifetime(prices, wsfr_amount, min_amount, return_life, inflation)
+#' lifetime <- nc_lifetime(prices, return_life, inflation, wsfr_amount, min_amount)
 #' ggplot(lifetime, aes(current_age, revenue_lifetime, fill = stream)) + geom_col()
+#'
+#' # revenue streams
+#' nc_annual_stream(retain_all, prices, wsfr_amount, min_amount, senior_price) %>%
+#'     filter(current_age == 16)
+#' nc_lifetime_stream(prices, return_life, inflation, wsfr_amount, min_amount)
 #'
 #' # break-even
 #' x <- nc_break_even(annual, wsfr_amount, min_amount, return_life, inflation)
@@ -166,26 +171,27 @@ NULL
 #' @describeIn nc_revenue Stream of Revenue for annual scenario (Revenue|A)
 #' @export
 nc_annual_stream <- function(
-    retain_all, prices, wsfr_amount, min_amount, senior_price,
-    senior_age = 65, age_cutoff = 80, youth_ages = 0:15
+    retain_all, prices, wsfr_amount = NULL, min_amount = NULL,
+    senior_price = NULL, senior_age = 65, age_cutoff = 80, youth_ages = 0:15
 ) {
-    # calculate license & wsfr revenue
+    # prepare youth data revenue estimation
     if (!is.null(youth_ages)) {
         retain_all <- nc_retain_youth(retain_all, youth_ages) %>%
             bind_rows(retain_all)
     }
-    lic <- retain_all %>%
-        left_join(prices, by = "current_age") %>%
-        mutate(lic_revenue = .data$price_annual * .data$pct)
-    wsfr <- retain_all %>%
-        wsfr_annual_stream(wsfr_amount, min_amount, senior_price, senior_age, age_cutoff)
+    # estimate revenue
+    revenue <- retain_all %>%
+        lic_annual_stream(prices) %>% mutate(stream = "lic_revenue")
 
-    # combine & reshape
-    full_join(wsfr, lic, by = c("current_age", "age_year")) %>%
-        select(.data$current_age, .data$age_year, contains("revenue")) %>%
-        tidyr::gather(stream, revenue_annual, .data$wsfr_revenue, .data$lic_revenue) %>%
-        mutate(revenue_annual = ifelse(is.na(.data$revenue_annual), 0,
-                                       .data$revenue_annual))
+    if (!is.null(wsfr_amount)) {
+        wsfr <- wsfr_annual_stream(
+            retain_all, wsfr_amount, min_amount, senior_price, senior_age, age_cutoff
+        ) %>%
+            mutate(stream = "wsfr_revenue")
+        revenue <- bind_rows(revenue, wsfr)
+    }
+    revenue %>%
+        select(.data$current_age, .data$age_year, .data$stream, .data$revenue_annual)
 }
 
 #' @describeIn nc_revenue Total Revenue for annual scenario (Revenue|A)
@@ -193,8 +199,8 @@ nc_annual_stream <- function(
 #' Convenience function to pull total revenue across all years
 #' @export
 nc_annual <- function(
-    retain_all, prices, wsfr_amount, min_amount, senior_price,
-    senior_age = 65, age_cutoff = 80, youth_ages = 0:15
+    retain_all, prices, wsfr_amount = NULL, min_amount = NULL,
+    senior_price = NULL, senior_age = 65, age_cutoff = 80, youth_ages = 0:15
 ) {
     retain_all %>%
         nc_annual_stream(prices, wsfr_amount, min_amount, senior_price,
@@ -207,75 +213,63 @@ nc_annual <- function(
 #' @describeIn nc_revenue Revenue for lifetime scenario (Revenue|L)
 #' @export
 nc_lifetime <- function(
-    prices, wsfr_amount, min_amount, return_life, inflation,
+    prices, return_life, inflation, wsfr_amount = NULL, min_amount = NULL,
     perpetuity = TRUE, youth_ages = 0:15, age_cutoff = 80, fund_years = 0:50
 ) {
-    wsfr <- prices %>%
-        wsfr_lifetime(wsfr_amount, min_amount, age_cutoff) %>%
-        select(-contains("price"))
-
+    # compound youth prices for fund valuation
     if (!is.null(youth_ages)) {
-        # youth prices need to be compounded for fund valuation
-        prices <- prices %>%
+        prices2 <- prices %>%
             nc_price_lifetime_youth(return_life, inflation, youth_ages)
     }
-    if (perpetuity) {
-        lic <- prices %>%
-            mutate(lic_revenue = .data$price_lifetime * return_life / inflation)
-    } else {
-        # calculate with a present value
-        lic <- prices %>% mutate(
-            lic_revenue = present_value(.data$price_lifetime, return_life,
-                                        fund_years, inflation)
-        )
+    # estimate revenue
+    revenue <- prices2 %>%
+        lic_lifetime(return_life, inflation, fund_years, perpetuity) %>%
+        mutate(stream = "lic_revenue")
+
+    if (!is.null(wsfr_amount)) {
+        wsfr <- prices %>%
+            wsfr_lifetime(wsfr_amount, min_amount, age_cutoff) %>%
+            select(-contains("price")) %>%
+            mutate(stream = "wsfr_revenue")
+        revenue <- bind_rows(revenue, wsfr)
     }
-    full_join(wsfr, lic, by = c("current_age")) %>%
-        tidyr::gather(stream, revenue_lifetime, .data$wsfr_revenue, .data$lic_revenue) %>%
+    revenue %>%
         select(.data$current_age, .data$stream, .data$revenue_lifetime)
 }
 
 #' @describeIn nc_revenue Stream of Revenue for lifetime scenario (Revenue|L)
 #' @export
 nc_lifetime_stream <- function(
-    prices, wsfr_amount, min_amount, return_life, inflation,
+    prices, return_life, inflation, wsfr_amount = NULL, min_amount = NULL,
     fund_years = 0:500, youth_ages = 0:15, age_cutoff = 80
 ) {
-    wsfr <- wsfr_lifetime_stream(prices, wsfr_amount, min_amount, age_cutoff)
-
+    # compound youth prices for fund valuation
     if (!is.null(youth_ages)) {
-        # youth lifetime license prices need to be compounded for valuation
-        prices <- prices %>%
+        prices2 <- prices %>%
             nc_price_lifetime_youth(return_life, inflation, youth_ages)
     }
+    # estimate revenue
+    revenue <- prices2 %>%
+        lic_lifetime_stream(return_life, inflation, fund_years) %>%
+        mutate(stream = "lic_revenue")
 
-    # revenue stream (by year)
-    revenue_one_age <- function(row) {
-        prices$price_lifetime[row] %>%
-            present_value_stream(return_life, fund_years, inflation) %>%
-            mutate(
-                current_age = prices$current_age[row],
-                age_year = .data$current_age + .data$year
-            ) %>%
-            select(.data$current_age, .data$age_year,
-                   lic_revenue = .data$return)
-    }
-    fund <- 1:nrow(prices) %>%
-        sapply(function(row) revenue_one_age(row), simplify = FALSE) %>%
-        bind_rows()
-
-    # - youth ages need to be correctly specified
+    # youth ages need to be correctly specified
+    # - revenue doesn't begin accruing until adulthood
     if (!is.null(youth_ages)) {
         first_adult <- max(youth_ages) + 1
-        fund <- fund %>% mutate(age_year = case_when(
+        revenue <- revenue %>% mutate(age_year = case_when(
             .data$current_age >= first_adult ~ .data$age_year,
             TRUE ~ first_adult - .data$current_age + .data$age_year
         ))
     }
-    full_join(wsfr, fund, by = c("current_age", "age_year")) %>%
-        tidyr::gather(stream, revenue_lifetime, .data$wsfr_revenue,
-                      .data$lic_revenue) %>%
-        mutate(revenue_lifetime = ifelse(is.na(.data$revenue_lifetime), 0,
-                                         .data$revenue_lifetime))
+    if (!is.null(wsfr_amount)) {
+        wsfr <- prices %>%
+            wsfr_lifetime_stream(wsfr_amount, min_amount, age_cutoff) %>%
+            mutate(stream = "wsfr_revenue")
+        revenue <- bind_rows(revenue, wsfr)
+    }
+    revenue %>%
+        select(.data$current_age, .data$age_year, .data$stream, .data$revenue_lifetime)
 }
 
 #' Calculate compounded price for youth lifetimes

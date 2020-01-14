@@ -8,18 +8,21 @@
 \alias{nc_lifetime_stream}
 \title{Calculate revenue for annual vs lifetime scenarios}
 \usage{
-nc_annual_stream(retain_all, prices, wsfr_amount, min_amount, senior_price,
-  senior_age = 65, age_cutoff = 80, youth_ages = 0:15)
+nc_annual_stream(retain_all, prices, wsfr_amount = NULL,
+  min_amount = NULL, senior_price = NULL, senior_age = 65,
+  age_cutoff = 80, youth_ages = 0:15)
 
-nc_annual(retain_all, prices, wsfr_amount, min_amount, senior_price,
-  senior_age = 65, age_cutoff = 80, youth_ages = 0:15)
+nc_annual(retain_all, prices, wsfr_amount = NULL, min_amount = NULL,
+  senior_price = NULL, senior_age = 65, age_cutoff = 80,
+  youth_ages = 0:15)
 
-nc_lifetime(prices, wsfr_amount, min_amount, return_life, inflation,
-  perpetuity = TRUE, youth_ages = 0:15, age_cutoff = 80,
-  fund_years = 0:50)
+nc_lifetime(prices, return_life, inflation, wsfr_amount = NULL,
+  min_amount = NULL, perpetuity = TRUE, youth_ages = 0:15,
+  age_cutoff = 80, fund_years = 0:50)
 
-nc_lifetime_stream(prices, wsfr_amount, min_amount, return_life, inflation,
-  fund_years = 0:500, youth_ages = 0:15, age_cutoff = 80)
+nc_lifetime_stream(prices, return_life, inflation, wsfr_amount = NULL,
+  min_amount = NULL, fund_years = 0:500, youth_ages = 0:15,
+  age_cutoff = 80)
 }
 \arguments{
 \item{retain_all}{data frame of predicted years by age like that produced by
@@ -96,8 +99,13 @@ prices <- tibble(
 annual <- nc_annual(retain_all, prices, wsfr_amount, min_amount, senior_price)
 ggplot(annual, aes(current_age, revenue_annual, fill = stream)) + geom_col()
 
-lifetime <- nc_lifetime(prices, wsfr_amount, min_amount, return_life, inflation)
+lifetime <- nc_lifetime(prices, return_life, inflation, wsfr_amount, min_amount)
 ggplot(lifetime, aes(current_age, revenue_lifetime, fill = stream)) + geom_col()
+
+# revenue streams
+nc_annual_stream(retain_all, prices, wsfr_amount, min_amount, senior_price) \%>\%
+    filter(current_age == 16)
+nc_lifetime_stream(prices, return_life, inflation, wsfr_amount, min_amount)
 
 # break-even
 x <- nc_break_even(annual, wsfr_amount, min_amount, return_life, inflation)

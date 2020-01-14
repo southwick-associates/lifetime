@@ -39,10 +39,7 @@ NULL
 lic_annual_stream <- function(retain_all, prices) {
     retain_all %>%
         left_join(prices, by = "current_age") %>%
-        mutate(
-            revenue_annual = .data$price_annual * .data$pct,
-            stream = "lic_revenue"
-        )
+        mutate(revenue_annual = .data$price_annual * .data$pct)
 }
 
 #' @describeIn lic_revenue Stream of Revenue for lifetime scenario (Revenue|L)
@@ -63,7 +60,7 @@ lic_lifetime_stream <- function(
         prices[row, ] %>%
             mutate(age_year = .data$current_age, return = 0) %>%
             bind_rows(revenue) %>%
-            select(.data$current_age, .data$age_year, lic_revenue = .data$return)
+            select(.data$current_age, .data$age_year, revenue_lifetime = .data$return)
     }
     1:nrow(prices) %>%
         sapply(function(row) revenue_one_age(row), simplify = FALSE) %>%
@@ -76,12 +73,14 @@ lic_lifetime <- function(
     prices, return_life, inflation, fund_years = NULL, perpetuity = TRUE
 ) {
     if (perpetuity) {
-        mutate(prices, lic_revenue = .data$price_lifetime * return_life / inflation)
+        prices %>%
+            mutate(revenue_lifetime = .data$price_lifetime * return_life / inflation)
     } else {
         # calculate with a present value
-        prices %>%
-            mutate(lic_revenue = present_value(.data$price_lifetime, return_life,
-                                               fund_years, inflation))
+        prices %>% mutate(
+            revenue_lifetime = present_value(.data$price_lifetime, return_life,
+                                           fund_years, inflation)
+        )
     }
 }
 
@@ -169,7 +168,7 @@ wsfr_annual_stream <- function(
 
     # calculate aid dollars for every year
     bind_rows(retain_all, retain_senior) %>%
-        mutate(wsfr_revenue = .data$pct * wsfr_amount)
+        mutate(revenue_annual = .data$pct * wsfr_amount)
 }
 
 #' @describeIn wsfr Stream of WSFR Aid for lifetime license scenario
@@ -188,8 +187,8 @@ wsfr_lifetime_stream <- function(
         1:x$yrs %>%
             sapply(function(i) mutate(x, years_since = i), simplify = FALSE) %>%
             bind_rows() %>%
-            mutate(age_year = age + .data$years_since, wsfr_revenue = wsfr_amount) %>%
-            select(.data$current_age, .data$years_since, .data$age_year, .data$wsfr_revenue)
+            mutate(age_year = age + .data$years_since, revenue_lifetime = wsfr_amount) %>%
+            select(.data$current_age, .data$years_since, .data$age_year, .data$revenue_lifetime)
     }
     prices$current_age %>%
         sapply(function(i) revenue_one_age(prices, i), simplify = FALSE) %>%
@@ -204,7 +203,7 @@ wsfr_lifetime <- function(
     prices %>%
         wsfr_lifetime_stream(wsfr_amount, min_amount, age_cutoff) %>%
         group_by(.data$current_age) %>%
-        summarise(yrs = n(), wsfr_revenue = sum(.data$wsfr_revenue))
+        summarise(yrs = n(), revenue_lifetime = sum(.data$revenue_lifetime))
 }
 
 #' Calculate the number of years to count WSFR dollars with lifetime sales
