@@ -78,14 +78,14 @@ data(retain_all)
 aidA <- retain_all \%>\%
     wsfr_annual_stream(wsfr_amount = 16.65, min_amount = 4, senior_price = 15) \%>\%
     group_by(.data$current_age) \%>\%
-    summarise(yrs = sum(.data$pct), wsfr_revenue = sum(.data$wsfr_revenue))
+    summarise(yrs = sum(pct), revenue_annual = sum(revenue_annual))
 
 # lifetime scenario
 prices <- tibble(current_age = 16:63, price_lifetime = rep(250, 48))
 aidL <- wsfr_lifetime(prices, wsfr_amount = 16.65, min_amount = 4)
 
 # there are large predicted differences in wsfr revenue outcomes
-aidL$wsfr_revenue - aidA$wsfr_revenue
+aidL$revenue_lifetime - aidA$revenue_annual
 }
 \seealso{
 Other estimating revenue: \code{\link{compound_interest}},

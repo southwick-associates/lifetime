@@ -104,16 +104,17 @@ ggplot(lifetime, aes(current_age, revenue_lifetime, fill = stream)) + geom_col()
 
 # revenue streams
 nc_annual_stream(retain_all, prices, wsfr_amount, min_amount, senior_price) \%>\%
-    filter(current_age == 16)
+    filter(age_year >= 16)
 nc_lifetime_stream(prices, return_life, inflation, wsfr_amount, min_amount)
 
 # break-even
-x <- nc_break_even(annual, wsfr_amount, min_amount, return_life, inflation)
+x <- nc_break_even(retain_all, prices, return_life, inflation, wsfr_amount,
+                   min_amount, senior_price)
 ggplot(x, aes(current_age, break_even)) + geom_line()
 
 # years to break-even (using revenue stream calculations)
-x <- nc_break_even_yrs(retain_all, prices, senior_price, wsfr_amount,
-                       min_amount, return_life, inflation)
+x <- nc_break_even_yrs(retain_all, prices, return_life, inflation, wsfr_amount,
+                       min_amount, senior_price)
 ggplot(x, aes(current_age, yrs_to_break_even)) + geom_col()
 }
 \seealso{

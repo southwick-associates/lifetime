@@ -115,16 +115,10 @@ nc_retain_youth <- function(retain_all, youth_ages = 0:15) {
 #' Calculate revenue for annual vs lifetime scenarios
 #'
 #' @inheritParams wsfr
-#' @param perpetuity if TRUE, use a perpetuity calculation
-#' (\url{https://en.wikipedia.org/wiki/Perpetuity}) instead of
-#' \code{\link{present_value}}
-#' @param return_life percentage return from lifetime fund
-#' @param inflation inflation rate for depreciation of lifetime fund
+#' @inheritParams lic_revenue
 #' @param youth_ages if not NULL, assumes for youths that the fund is able to
 #' compound until adulthood (when the agency will begin drawing revenue). See
 #' \code{\link{nc_price_lifetime_youth}} for details.
-#' @param fund_years range of years to cast forward for stream-based lifetime
-#' fund valuation
 #' @name nc_revenue
 #' @family wrapper functions for NC results
 #' @examples
@@ -155,16 +149,17 @@ nc_retain_youth <- function(retain_all, youth_ages = 0:15) {
 #'
 #' # revenue streams
 #' nc_annual_stream(retain_all, prices, wsfr_amount, min_amount, senior_price) %>%
-#'     filter(current_age == 16)
+#'     filter(age_year >= 16)
 #' nc_lifetime_stream(prices, return_life, inflation, wsfr_amount, min_amount)
 #'
 #' # break-even
-#' x <- nc_break_even(annual, wsfr_amount, min_amount, return_life, inflation)
+#' x <- nc_break_even(retain_all, prices, return_life, inflation, wsfr_amount,
+#'                    min_amount, senior_price)
 #' ggplot(x, aes(current_age, break_even)) + geom_line()
 #'
 #' # years to break-even (using revenue stream calculations)
-#' x <- nc_break_even_yrs(retain_all, prices, senior_price, wsfr_amount,
-#'                        min_amount, return_life, inflation)
+#' x <- nc_break_even_yrs(retain_all, prices, return_life, inflation, wsfr_amount,
+#'                        min_amount, senior_price)
 #' ggplot(x, aes(current_age, yrs_to_break_even)) + geom_col()
 NULL
 
@@ -315,11 +310,9 @@ nc_price_lifetime_youth <- function(
 #' Find lifetime price (by current_age) where Revenue|A == Revenue|L
 #'
 #' This uses a solver function, \code{\link[stats]{uniroot}}, to find break-even
-#' prices for lifetime licenses given predicted annual revenue.
+#' prices for lifetime licenses.
 #'
 #' @inheritParams nc_revenue
-#' @param annual_revenue target revenue to solve lifetime break-even price
-#' @param ignore_wsfr if TRUE, don't include WSFR dollars in break-even price
 #' @param max_price Maximum lifetime license price used in solver function. A
 #' lower number will allow the function to execute more quickly.
 #' @family wrapper functions for NC results
@@ -327,25 +320,24 @@ nc_price_lifetime_youth <- function(
 #' @examples
 #' # see ?nc_revenue for an example
 nc_break_even <- function(
-    annual_revenue, wsfr_amount, min_amount, return_life, inflation,
-    perpetuity = TRUE, ignore_wsfr = TRUE, youth_ages = 0:15, age_cutoff = 80,
-    max_price = 1000
+    retain_all, prices, return_life, inflation, wsfr_amount = NULL, min_amount = NULL,
+    senior_price = NULL, senior_age = 65, perpetuity = TRUE, youth_ages = 0:15,
+    age_cutoff = 80, max_price = 1000
 ) {
-    revenue <- annual_revenue
-    if (ignore_wsfr) {
-        revenue <- filter(revenue, .data$stream == "lic_revenue")
-    }
-    ages <- unique(revenue$current_age)
+    annual <- nc_annual_stream(
+        retain_all, prices, wsfr_amount, min_amount, senior_price,
+        senior_age, age_cutoff, youth_ages
+    )
+    ages <- unique(annual$current_age)
 
     # define functions for solving lifetime price
     # - calculate revenue effect for a given price-age
     revenue_effect <- function(price, age) {
-        annual <- filter(revenue, .data$current_age == age)
+        annual_slct <- filter(annual, .data$current_age == age)
         lifetime <- tibble(current_age = age, price_lifetime = price) %>%
-            nc_lifetime(wsfr_amount, min_amount, return_life, inflation,
+            nc_lifetime(return_life, inflation, wsfr_amount, min_amount,
                         perpetuity, youth_ages, age_cutoff)
-        if (ignore_wsfr) lifetime <- filter(lifetime, .data$stream == "lic_revenue")
-        abs(sum(lifetime$revenue_lifetime) - sum(annual$revenue_annual))
+        abs(sum(lifetime$revenue_lifetime) - sum(annual_slct$revenue_annual))
     }
     # - get break-even price for given age
     break_even <- function(slct_age) {
@@ -374,8 +366,8 @@ nc_break_even <- function(
 #' @examples
 #' # see ?nc_revenue
 nc_break_even_yrs <- function(
-    retain_all, prices, senior_price, wsfr_amount, min_amount, return_life, inflation,
-    ignore_wsfr = TRUE, youth_ages = 0:15, age_cutoff = 80, fund_years = 0:200,
+    retain_all, prices, return_life, inflation, wsfr_amount = NULL, min_amount = NULL,
+    senior_price = NULL, youth_ages = 0:15, age_cutoff = 80, fund_years = 0:200,
     senior_age = 65
 ) {
     # calculate revenue streams
@@ -384,15 +376,9 @@ nc_break_even_yrs <- function(
         senior_age, age_cutoff, youth_ages
     )
     lifetime <- nc_lifetime_stream(
-        prices, wsfr_amount, min_amount, return_life, inflation,
+        prices, return_life, inflation, wsfr_amount, min_amount,
         fund_years, youth_ages, age_cutoff
     )
-
-    # combine
-    if (ignore_wsfr) {
-        annual <- filter(annual, .data$stream != "wsfr_revenue")
-        lifetime <- filter(lifetime, .data$stream != "wsfr_revenue")
-    }
     revenue <- full_join(
         group_by(annual, .data$current_age, .data$age_year) %>%
             summarise(revenue_annual = sum(.data$revenue_annual)) %>%

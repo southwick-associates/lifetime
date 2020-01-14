@@ -4,12 +4,21 @@
 \alias{nc_break_even}
 \title{Find lifetime price (by current_age) where Revenue|A == Revenue|L}
 \usage{
-nc_break_even(annual_revenue, wsfr_amount, min_amount, return_life,
-  inflation, perpetuity = TRUE, ignore_wsfr = TRUE,
-  youth_ages = 0:15, age_cutoff = 80, max_price = 1000)
+nc_break_even(retain_all, prices, return_life, inflation,
+  wsfr_amount = NULL, min_amount = NULL, senior_price = NULL,
+  senior_age = 65, perpetuity = TRUE, youth_ages = 0:15,
+  age_cutoff = 80, max_price = 1000)
 }
 \arguments{
-\item{annual_revenue}{target revenue to solve lifetime break-even price}
+\item{retain_all}{data frame of predicted years by age like that produced by
+\code{\link{nc_retain_all}}}
+
+\item{prices}{data frame of lifetime prices by age with at least
+2 variables: current_age and price_lifetime}
+
+\item{return_life}{percentage return from lifetime fund}
+
+\item{inflation}{inflation rate for depreciation of lifetime fund}
 
 \item{wsfr_amount}{numeric estimated amount for aid dollars (use SFRF for
 fishing, WRF for hunting)}
@@ -17,15 +26,14 @@ fishing, WRF for hunting)}
 \item{min_amount}{numeric the minimum expenditure that will count for a
 certified hunter/angler (use 2 for hunt/fish and 4 for combo)}
 
-\item{return_life}{percentage return from lifetime fund}
+\item{senior_price}{numeric price for a senior lifetime license}
 
-\item{inflation}{inflation rate for depreciation of lifetime fund}
+\item{senior_age}{numeric age when a participant will be expected to buy
+a cheap lifetime license}
 
 \item{perpetuity}{if TRUE, use a perpetuity calculation
 (\url{https://en.wikipedia.org/wiki/Perpetuity}) instead of
 \code{\link{present_value}}}
-
-\item{ignore_wsfr}{if TRUE, don't include WSFR dollars in break-even price}
 
 \item{youth_ages}{if not NULL, assumes for youths that the fund is able to
 compound until adulthood (when the agency will begin drawing revenue). See
@@ -39,7 +47,7 @@ lower number will allow the function to execute more quickly.}
 }
 \description{
 This uses a solver function, \code{\link[stats]{uniroot}}, to find break-even
-prices for lifetime licenses given predicted annual revenue.
+prices for lifetime licenses.
 }
 \examples{
 # see ?nc_revenue for an example
