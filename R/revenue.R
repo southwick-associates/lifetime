@@ -128,9 +128,10 @@ lic_lifetime <- function(
 #' data(retain_all)
 #'
 #' # annual scenario
-#' aidA <- wsfr_annual(
-#'     retain_all, wsfr_amount = 16.65, min_amount = 4, senior_price = 15
-#' )
+#' aidA <- retain_all %>%
+#'     wsfr_annual_stream(wsfr_amount = 16.65, min_amount = 4, senior_price = 15) %>%
+#'     group_by(.data$current_age) %>%
+#'     summarise(yrs = sum(.data$pct), wsfr_revenue = sum(.data$wsfr_revenue))
 #'
 #' # lifetime scenario
 #' prices <- tibble(current_age = 16:63, price_lifetime = rep(250, 48))
@@ -171,22 +172,7 @@ wsfr_annual_stream <- function(
         mutate(wsfr_revenue = .data$pct * wsfr_amount)
 }
 
-#' @describeIn wsfr Total WSFR Aid for annual license scenario
-#'
-#' Convenience function to aggregate stream of revenue to total across years
-#' @export
-wsfr_annual <- function(
-    retain_all, wsfr_amount, min_amount, senior_price,
-    senior_age = 65, age_cutoff = 80
-) {
-    retain_all %>%
-        wsfr_annual_stream(wsfr_amount, min_amount, senior_price, senior_age,
-                           age_cutoff) %>%
-        group_by(.data$current_age) %>%
-        summarise(yrs = sum(.data$pct), wsfr_revenue = sum(.data$wsfr_revenue))
-}
-
-#' @describeIn wsfr WSFR Aid for lifetime license scenario
+#' @describeIn wsfr Stream of WSFR Aid for lifetime license scenario
 #' @export
 wsfr_lifetime_stream <- function(
     prices, wsfr_amount, min_amount, age_cutoff = 80
@@ -210,9 +196,7 @@ wsfr_lifetime_stream <- function(
         bind_rows()
 }
 
-#' @describeIn wsfr WSFR Aid for lifetime license scenario
-#'
-#' Convenience function to aggregate stream of revenue to total across years
+#' @describeIn wsfr Total WSFR Aid for lifetime license scenario
 #' @export
 wsfr_lifetime <- function(
     prices, wsfr_amount, min_amount, age_cutoff = 80

@@ -3,15 +3,11 @@
 \name{wsfr}
 \alias{wsfr}
 \alias{wsfr_annual_stream}
-\alias{wsfr_annual}
 \alias{wsfr_lifetime_stream}
 \alias{wsfr_lifetime}
 \title{Calculate WSFR Aid dollars by current age}
 \usage{
 wsfr_annual_stream(retain_all, wsfr_amount, min_amount, senior_price,
-  senior_age = 65, age_cutoff = 80)
-
-wsfr_annual(retain_all, wsfr_amount, min_amount, senior_price,
   senior_age = 65, age_cutoff = 80)
 
 wsfr_lifetime_stream(prices, wsfr_amount, min_amount, age_cutoff = 80)
@@ -68,15 +64,9 @@ participate in the future. It also assumes by default that any remaining
 participants will buy a lifetime license at senior_age. The stream calculation
 forcasts aid for relevant future years.
 
-\item \code{wsfr_annual}: Total WSFR Aid for annual license scenario
+\item \code{wsfr_lifetime_stream}: Stream of WSFR Aid for lifetime license scenario
 
-Convenience function to aggregate stream of revenue to total across years
-
-\item \code{wsfr_lifetime_stream}: WSFR Aid for lifetime license scenario
-
-\item \code{wsfr_lifetime}: WSFR Aid for lifetime license scenario
-
-Convenience function to aggregate stream of revenue to total across years
+\item \code{wsfr_lifetime}: Total WSFR Aid for lifetime license scenario
 }}
 
 \examples{
@@ -85,9 +75,10 @@ library(ggplot2)
 data(retain_all)
 
 # annual scenario
-aidA <- wsfr_annual(
-    retain_all, wsfr_amount = 16.65, min_amount = 4, senior_price = 15
-)
+aidA <- retain_all \%>\%
+    wsfr_annual_stream(wsfr_amount = 16.65, min_amount = 4, senior_price = 15) \%>\%
+    group_by(.data$current_age) \%>\%
+    summarise(yrs = sum(.data$pct), wsfr_revenue = sum(.data$wsfr_revenue))
 
 # lifetime scenario
 prices <- tibble(current_age = 16:63, price_lifetime = rep(250, 48))
