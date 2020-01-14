@@ -1,6 +1,89 @@
 # estimating revenue
+# - License: estimated revenue from license sales
 # - WSFR: money allocated based on USFWS certified hunters/anglers
-# - Lifetime Fund: a perpetuity fund like Oklahoma or North Carolina
+# - Lifetime Fund: calculating lifetime fund revenue
+
+# License -----------------------------------------------------------------
+
+#' Calculate future license revenue streams by current age
+#'
+#' @inheritParams wsfr
+#' @param perpetuity if TRUE, use a perpetuity calculation
+#' (\url{https://en.wikipedia.org/wiki/Perpetuity}) instead of
+#' \code{\link{present_value}}
+#' @param fund_years range of years to cast forward for stream-based lifetime
+#' fund valuation
+#' @param return_life percentage return from lifetime fund
+#' @param inflation inflation rate for depreciation of lifetime fund
+#' @name lic_revenue
+#' @examples
+#' library(dplyr)
+#' library(ggplot2)
+#' data(retain_all)
+#'
+#' # annual revenue simply follows retention curves (assuming constant pricing)
+#' prices <- tibble(current_age = 16:63, price_annual = rep(40, 48))
+#' lic_annual_stream(retain_all, prices)
+#'
+#' # stream of lifetime revenue
+#' prices <- mutate(prices, price_lifetime = rep(250, 48))
+#' lic_lifetime_stream(prices, 0.05, 0.0219)
+#'
+#' # total lifetime revenue (perpetuity vs. 50-year ROI)
+#' lic_lifetime(prices, 0.05, 0.0219)
+#' lic_lifetime(prices, 0.05, 0.0219, fund_years = 0:50, perpetuity = FALSE)
+NULL
+
+#' @describeIn lic_revenue Stream of Revenue for annual scenario (Revenue|A)
+#' @export
+lic_annual_stream <- function(retain_all, prices) {
+    retain_all %>%
+        left_join(prices, by = "current_age") %>%
+        mutate(
+            revenue_annual = .data$price_annual * .data$pct,
+            stream = "lic_revenue"
+        )
+}
+
+#' @describeIn lic_revenue Stream of Revenue for lifetime scenario (Revenue|L)
+#' @export
+lic_lifetime_stream <- function(
+    prices, return_life, inflation, fund_years = 0:500
+) {
+    # revenue stream (by year)
+    revenue_one_age <- function(row) {
+        revenue <- prices$price_lifetime[row] %>%
+            present_value_stream(return_life, fund_years, inflation) %>%
+            mutate(
+                current_age = prices$current_age[row],
+                age_year = .data$current_age + .data$year
+            )
+        # add a year zero row to the top of the data frame
+        # - it takes a full year before the agency can withdraw revenue
+        prices[row, ] %>%
+            mutate(age_year = .data$current_age, return = 0) %>%
+            bind_rows(revenue) %>%
+            select(.data$current_age, .data$age_year, lic_revenue = .data$return)
+    }
+    1:nrow(prices) %>%
+        sapply(function(row) revenue_one_age(row), simplify = FALSE) %>%
+        bind_rows()
+}
+
+#' @describeIn lic_revenue Total Revenue for lifetime scenario (Revenue|L)
+#' @export
+lic_lifetime <- function(
+    prices, return_life, inflation, fund_years = NULL, perpetuity = TRUE
+) {
+    if (perpetuity) {
+        mutate(prices, lic_revenue = .data$price_lifetime * return_life / inflation)
+    } else {
+        # calculate with a present value
+        prices %>%
+            mutate(lic_revenue = present_value(.data$price_lifetime, return_life,
+                                               fund_years, inflation))
+    }
+}
 
 # WSFR --------------------------------------------------------------------
 
