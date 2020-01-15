@@ -3,25 +3,190 @@
 Retention Overview
 ------------------
 
-Estimating revenue in the annual purchase scenario fundamentally depends upon predicting the number of years a customer will buy licenses in the future. The method presented here bases these predictions on retention rates (% of buyers in one year who buy licenses in subsequent years).
+Estimating revenue in the annual purchase scenario fundamentally depends upon predicting the number of years a customer will buy licenses in the future. The method presented here uses retention rates (% of buyers in one year who buy licenses in subsequent years).
 
 ### Retention Curves
 
-Retention curves can be constructed from observed retention rates, and these always slope downward. The example below is pulled from the NC report Appendix, and uses a linear regression line fit to 10 years of observed retention rates for hunters aged 45 in year zero. This vignette walks through the R functions used to estimate such retention curves.
+Retention curves can be constructed from observed retention rates, and these always slope downward. The example below is pulled from the NC report Appendix, and uses linear regression fit to 10 years of observed retention rates for hunters aged 45 in year zero. This vignette walks through the R functions used to estimate such retention curves.
 
 ![](figures/appendix-retention.png)
+
+Data Standardization
+--------------------
+
+The functions in package lifetime expect that license data has been prepared in a way consistent with the structure described in [package salic](https://southwick-associates.github.io/salic/articles/salic.html). Sample data in the salic standard format is provided in this package:
+
+``` r
+library(tidyverse)
+library(lifetime)
+data(cust, lic, sale, hunt) # load lifetime sample data
+```
+
+``` r
+# standard license data for 100K customers
+sale %>%
+    left_join(lic, by = "lic_id") %>% 
+    left_join(cust, by = "cust_id") %>%
+    head(2)
+#> # A tibble: 2 x 8
+#>   cust_id lic_id  year life_group duration   sex birth_year cust_res
+#>     <int>  <dbl> <int> <chr>         <int> <int>      <int>    <int>
+#> 1 1992994     64  2008 sportsman         1     1       1984        1
+#> 2 2410481     64  2008 sportsman         1     1       1946        1
+
+# hunting permission history for those 100k customers
+head(hunt, 2)
+#> # A tibble: 2 x 4
+#>   cust_id  year   res age_year
+#>     <int> <int> <int>    <int>
+#> 1 6789209  2011     1       32
+#> 2 6789209  2012     1       33
+```
+
+Simple Retention Calculation
+----------------------------
+
+The basis of retention is the focus on a "year zero" reference year with known license holders. For example, for year0 = 2008, year1 = 2009, year2 = 2010 (etc), we can pretty easily calculate a retention curve with a custom function:
+
+``` r
+calc_retain <- function(hunt, year0) {
+    hunt_year0 <- filter(hunt, year == year0)
+    semi_join(hunt, hunt_year0, by = "cust_id") %>% 
+        count(year) %>%
+        mutate(retain_rate = n / nrow(hunt_year0))
+}
+calc_retain(hunt, 2008) %>% head(3)
+#> # A tibble: 3 x 3
+#>    year     n retain_rate
+#>   <int> <int>       <dbl>
+#> 1  2008  6912       1    
+#> 2  2009  4594       0.665
+#> 3  2010  4528       0.655
+```
+
+Our function doesn't work though if we want to use 2009 for year0.
+
+``` r
+calc_retain(hunt, 2009) %>% head(3)
+#> # A tibble: 3 x 3
+#>    year     n retain_rate
+#>   <int> <int>       <dbl>
+#> 1  2008  4594       0.643
+#> 2  2009  7146       1    
+#> 3  2010  5141       0.719
+```
 
 Data Preparation
 ----------------
 
-Observed Retention Rates
-------------------------
+We could modify the above function, but filtering problems can also crop-up in downstream calculations. To streamline filtering customers of interest, package lifetime uses a split operation that separates a the license history into 2 components: (1) a "year0" customer table used as reference for filtering, and (2) a "history" table for calculating retention.
 
-Model Fit
----------
+``` r
+hunt_split <- yrs_zero_split(hunt)
+lapply(hunt_split, function(x) head(x, 2))
+#> $year0
+#> # A tibble: 2 x 4
+#>   cust_id  year   res age_year
+#>     <int> <int> <int>    <int>
+#> 1 6789209  2011     1       32
+#> 2 6789209  2012     1       33
+#> 
+#> $history
+#> # A tibble: 2 x 2
+#>   cust_id  year
+#>     <int> <int>
+#> 1 6789209  2011
+#> 2 6789209  2012
+```
 
-Model Prediction
+We then use `yrs_zero_filter()` with `yrs_calc_retain` to calculate the 2008 retention curve:
+
+``` r
+hunt_split %>%
+    yrs_zero_filter(function(x) filter(x, year == 2008)) %>%
+    yrs_calc_retain() %>% 
+    head(2)
+#> # A tibble: 2 x 3
+#>   years_since   pct    n0
+#>         <int> <dbl> <int>
+#> 1           1 0.665  6912
+#> 2           2 0.655  6912
+```
+
+Retention Calculation
+---------------------
+
+The "split" paradigm is more useful for more complex cases. Say we want to look at those aged 25 to 35, but wish to include all available data possible (year0 = 2008, 2009, ...):
+
+``` r
+hunt_split <- hunt_split %>% 
+    yrs_zero_filter(function(x) filter(x, age_year %in% 25:35))
+retain <- yrs_calc_retain(hunt_split)
+
+p <- ggplot(retain, aes(years_since, pct)) + 
+    geom_line() +
+    ggtitle("Retention for hunters aged 25 to 35")
+p
+```
+
+![](man/figures/unnamed-chunk-8-1.png)
+
+The plot below demonstrates the use of multiple years zeroes with the `yrs_calc_retain()` grouping option. By default, the function will average across all available year zeroes.
+
+``` r
+retain_all <- yrs_calc_retain(hunt_split, year0)
+p + geom_point(data = retain_all)
+```
+
+![](man/figures/unnamed-chunk-9-1.png)
+
+Regression Modelling
+--------------------
+
+With license data, we are faced with a limited amount of time (e.g., 10 years) for calculating retention. To extrapolate further we can use a simple regression model. A logarithmic relationship seems to provide a decent fit to the time trend.
+
+``` r
+model_fit <- lm(pct ~ log(years_since), data = retain)
+model_fit
+#> 
+#> Call:
+#> lm(formula = pct ~ log(years_since), data = retain)
+#> 
+#> Coefficients:
+#>      (Intercept)  log(years_since)  
+#>          0.68169          -0.08888
+```
+
+We can then predict for future years. This is also useful because the sum of retention rates is equal to total future years over a given timeframe (34 years in this example):
+
+``` r
+model_predict <- data.frame(years_since = 1:34)
+model_predict$pct <- predict(model_fit, model_predict)
+tail(model_predict, 3)
+#>    years_since       pct
+#> 32          32 0.3736553
+#> 33          33 0.3709204
+#> 34          34 0.3682671
+sum(model_predict$pct)
+#> [1] 15.30437
+```
+
+Full Calculation
 ----------------
 
-Pulling it all together
------------------------
+Package lifetime includes convenience functions that wrap up the retention modelling steps for analysis. Here we are using the hunting permission data for those aged 25 to 35 to predict future years (till age 64) for 30-year-olds:
+
+``` r
+hunt_split <- hunt %>%
+    yrs_zero_split() %>%
+    yrs_zero_filter(function(x) filter(x, age_year %in% 25:35))
+
+observe <- yrs_result_observe(hunt_split, predict_age = 30)
+retain <- yrs_result_retain(hunt_split, predict_age = 30, end_age = 64)
+
+yrs_plot(retain) + 
+    geom_point(data = observe) +
+    ggtitle("Retention curve for 30-year-old hunters")
+```
+
+![](man/figures/unnamed-chunk-12-1.png)
