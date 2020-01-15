@@ -1,0 +1,32 @@
+---
+output: github_document
+---
+<!-- retention.md is generated from retention.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/"
+)
+```
+
+## Retention Overview
+
+Estimating revenue in the annual purchase scenario fundamentally depends upon predicting the number of years a customer will buy licenses in the future. The method presented here bases these predictions on retention rates (% of buyers in one year who buy licenses in subsequent years). 
+
+### Retention Curves
+
+Retention curves can be constructed from observed retention rates, and these always slope downward. The example below is pulled from the NC report Appendix, and uses a linear regression line fit to 10 years of observed retention rates for hunters aged 45 in year zero. This vignette walks through the R functions used to estimate such retention curves.
+
+![](figures/appendix-retention.png)
+
+## Data Preparation
+
+## Observed Retention Rates
+
+## Model Fit
+
+## Model Prediction
+
+## Pulling it all together

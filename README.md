@@ -1,7 +1,7 @@
 
 # lifetime
 
-A Southwick-only R package for lifetime pricing analysis. It includes functions for producing final analysis, as well as functions for evaluating alternative methods; in particular for estimating future years of license purchases.
+A Southwick-only R package for lifetime pricing analysis. It includes functions for producing final analysis, as well as functions for evaluating alternative methods (in particular for estimating future years of license purchases).
 
 ## Installation
 
@@ -18,9 +18,9 @@ devtools::install_github("southwick-associates/salicprep")
 
 ## Usage
 
-A reference project is included on the Data Server ("E:/SA/Projects/NCWRC-19-01"). This package also includes several vignettes to guide analysts:
+A reference project is included on the Server (E:/SA/Projects/NCWRC-19-01). This package also includes several vignettes to guide analysts:
 
-1. Retention Curves: Estimating retention curves (by age) using linear regression
+1. [Retention Curves](github-vignettes/retention.md): Estimating retention curves (by age) using linear regression
 2. Revenue: Estimating future agency revenue (annual vs. lifetime scenarios) for license sales & WSFR aid
 3. NC Analysis: Functions to streamline full analysis
 
