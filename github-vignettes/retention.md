@@ -126,9 +126,9 @@ The "split" paradigm is more useful for more complex cases. Say we want to look 
 ``` r
 hunt_split <- hunt_split %>% 
     yrs_zero_filter(function(x) filter(x, age_year %in% 25:35))
-retain <- yrs_calc_retain(hunt_split)
+retain_observe <- yrs_calc_retain(hunt_split)
 
-p <- ggplot(retain, aes(years_since, pct)) + 
+p <- ggplot(retain_observe, aes(years_since, pct)) + 
     geom_line() +
     geom_point() +
     ggtitle("Retention for hunters aged 25 to 35")
@@ -140,8 +140,8 @@ p
 The plot below demonstrates the use of multiple year zeroes with the `yrs_calc_retain()` grouping option. By default, the function will average across all available year zeroes (like the plot above).
 
 ``` r
-retain_all <- yrs_calc_retain(hunt_split, year0)
-p + geom_point(data = retain_all, aes(color = year0))
+retain_observe_multi <- yrs_calc_retain(hunt_split, year0)
+p + geom_point(data = retain_observe_multi, aes(color = year0))
 ```
 
 ![](retention_files/figure-markdown_github/unnamed-chunk-10-1.png)
@@ -152,13 +152,13 @@ Regression Modelling
 With license data, we are faced with a limited stretch of time (e.g., 10 years) for calculating retention. To extrapolate further we can use a simple regression model. A logarithmic relationship seems to provide a decent fit to the time trend.
 
 ``` r
-model_fit <- lm(pct ~ log(years_since), data = retain)
+model_fit <- lm(pct ~ log(years_since), data = retain_observe)
 retain_predict <- data.frame(years_since = 1:34)
 retain_predict$pct <- predict(model_fit, retain_predict)
 
 ggplot(retain_predict, aes(years_since, pct)) + 
     geom_line() +
-    geom_point(data = retain)
+    geom_point(data = retain_observe)
 ```
 
 ![](retention_files/figure-markdown_github/unnamed-chunk-11-1.png)
