@@ -77,6 +77,16 @@ There are wrapper functions to calculate retention across all selected ages (16-
 ``` r
 observe_all <- nc_retain_all(df_split, ages, use_observed = TRUE)
 retain_all <- nc_retain_all(df_split, ages)
+
+filter(retain_all, current_age %in% c(20, 30, 40), years_since > 0) %>%
+    ggplot(aes(years_since, pct, color = factor(current_age))) +
+    geom_line() +
+    ggtitle("Retention Curves for select ages")
+```
+
+![](nc-analysis_files/figure-markdown_github/unnamed-chunk-5-1.png)
+
+``` r
 retain <- nc_retain(retain_all)
 
 ggplot(retain, aes(current_age, yrs)) + 
@@ -84,7 +94,7 @@ ggplot(retain, aes(current_age, yrs)) +
     ggtitle("Estimated future participation years by age")
 ```
 
-![](nc-analysis_files/figure-markdown_github/unnamed-chunk-5-1.png)
+![](nc-analysis_files/figure-markdown_github/unnamed-chunk-6-1.png)
 
 Calculate Revenue
 -----------------

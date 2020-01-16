@@ -71,6 +71,14 @@ There are wrapper functions to calculate retention across all selected ages (16-
 ```{r, fig.height = 3}
 observe_all <- nc_retain_all(df_split, ages, use_observed = TRUE)
 retain_all <- nc_retain_all(df_split, ages)
+
+filter(retain_all, current_age %in% c(20, 30, 40), years_since > 0) %>%
+    ggplot(aes(years_since, pct, color = factor(current_age))) +
+    geom_line() +
+    ggtitle("Retention Curves for select ages")
+```
+
+```{r, fig.height=3}
 retain <- nc_retain(retain_all)
 
 ggplot(retain, aes(current_age, yrs)) + 
