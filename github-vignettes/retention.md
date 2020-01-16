@@ -24,6 +24,8 @@ data(cust, lic, sale, hunt) # load lifetime sample data
 
 ``` r
 # standard license data for 100K customers
+# - the lic table has an extra field (life_group) identifying the license types of interest
+# - for the lifetime pricing analysis
 sale %>%
     left_join(lic, by = "lic_id") %>% 
     left_join(cust, by = "cust_id") %>%
@@ -79,7 +81,7 @@ calc_retain(hunt, 2009) %>% head(3)
 Data Preparation
 ----------------
 
-We could modify the above function, but filtering problems can also crop-up in downstream calculations. To streamline filtering customers of interest, package lifetime uses a split operation that separates a the license history into 2 components: (1) a "year0" customer table used as reference for filtering, and (2) a "history" table for calculating retention.
+We could modify the above function, but filtering problems can also crop-up in downstream calculations. To streamline filtering customers of interest, package lifetime uses `yrs_zero` preparation functions that incorporate a split operation to separate license history into 2 components: (1) a "year0" customer table used as reference for filtering, and (2) a "history" table for calculating retention.
 
 ``` r
 hunt_split <- yrs_zero_split(hunt)
@@ -129,16 +131,16 @@ p <- ggplot(retain, aes(years_since, pct)) +
 p
 ```
 
-![](man/figures/unnamed-chunk-8-1.png)
+![](retention_files/figure-markdown_github/unnamed-chunk-8-1.png)
 
-The plot below demonstrates the use of multiple years zeroes with the `yrs_calc_retain()` grouping option. By default, the function will average across all available year zeroes.
+The plot below demonstrates the use of multiple year zeroes with the `yrs_calc_retain()` grouping option. By default, the function will average across all available year zeroes.
 
 ``` r
 retain_all <- yrs_calc_retain(hunt_split, year0)
 p + geom_point(data = retain_all)
 ```
 
-![](man/figures/unnamed-chunk-9-1.png)
+![](retention_files/figure-markdown_github/unnamed-chunk-9-1.png)
 
 Regression Modelling
 --------------------
@@ -174,19 +176,36 @@ sum(model_predict$pct)
 Full Calculation
 ----------------
 
-Package lifetime includes convenience functions that wrap up the retention modelling steps for analysis. Here we are using the hunting permission data for those aged 25 to 35 to predict future years (till age 64) for 30-year-olds:
+Package lifetime includes `yrs_result` convenience functions that wrap up the retention modelling steps for analysis. Here we are using the hunting permission data for those aged 25 to 35 to predict future years (till age 64) for 30-year-olds:
 
 ``` r
 hunt_split <- hunt %>%
     yrs_zero_split() %>%
     yrs_zero_filter(function(x) filter(x, age_year %in% 25:35))
 
-observe <- yrs_result_observe(hunt_split, predict_age = 30)
-retain <- yrs_result_retain(hunt_split, predict_age = 30, end_age = 64)
-
-yrs_plot(retain) + 
-    geom_point(data = observe) +
-    ggtitle("Retention curve for 30-year-old hunters")
+estimate_and_plot <- function(hunt_split) {
+    observe <- yrs_result_observe(hunt_split, predict_age = 30)
+    retain <- yrs_result_retain(hunt_split, predict_age = 30, end_age = 64)
+    yrs_plot(retain) + geom_point(data = observe)
+}
+estimate_and_plot(hunt_split) + ggtitle("Retention curve for 30-year-old hunters")
 ```
 
-![](man/figures/unnamed-chunk-12-1.png)
+![](retention_files/figure-markdown_github/unnamed-chunk-12-1.png)
+
+We also might be interested in focusing further. For example on residents who buy the comprehensive license; we use `yrs_lifetime_join()` to flag customers who buy that license type and then exclude customers who don't with `yrs_zero_filter()`:
+
+``` r
+hunt_split <- hunt %>%
+    yrs_lifetime_join(sale, lic, "comp_hunt") %>%
+    yrs_zero_split() %>%
+    yrs_zero_filter(function(x) {
+        # would also likely choose age_year == 30 for actual analysis
+        # but the sampled data are too noisy for a nice demonstration
+        filter(x, age_year %in% 25:35, res == 1, life_group == "comp_hunt")
+    })
+estimate_and_plot(hunt_split) +
+    ggtitle("Retention for 30-year-old resident comprehensive hunting license buyers")
+```
+
+![](retention_files/figure-markdown_github/unnamed-chunk-13-1.png)
