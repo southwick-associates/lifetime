@@ -21,8 +21,8 @@ devtools::install_github("southwick-associates/salicprep")
 A reference project is included on the Server (E:/SA/Projects/NCWRC-19-01). This package also includes several vignettes to guide analysts:
 
 1. [Retention Curves](github-vignettes/retention.md): Estimating retention curves (by age) using linear regression
-2. Revenue: Estimating future agency revenue (annual vs. lifetime scenarios) for license sales & WSFR aid
-3. NC Analysis: Functions to streamline full analysis
+2. [Revenue](github-vignettes/revenue.md): Estimating future agency revenue (annual vs. lifetime scenarios) for license sales & WSFR aid
+3. [NC Analysis](github-vignettes/nc-analysis.md): Functions to streamline full analysis
 
 ## Documentation
 
