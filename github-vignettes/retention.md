@@ -14,18 +14,17 @@ Retention curves can be constructed from observed retention rates, and these alw
 Data Standardization
 --------------------
 
-The functions in package lifetime expect that license data has been prepared in a way consistent with the structure described in [package salic](https://southwick-associates.github.io/salic/articles/salic.html). Sample data in the salic standard format is provided in this package:
+The functions in package lifetime expect that license data has been prepared in a way consistent with the structure described in [package salic](https://southwick-associates.github.io/salic/articles/salic.html). Sample data in the salic standard format is provided in this package, which is based on a 100,000 customer sample.
 
 ``` r
 library(tidyverse)
 library(lifetime)
-data(cust, lic, sale, hunt) # load lifetime sample data
+data(cust, lic, sale)
 ```
 
+Note that the "lic" table has an extra field (life\_group) for identifying license types of interest for lifetime pricing analysis.
+
 ``` r
-# standard license data for 100K customers
-# - the lic table has an extra field (life_group) identifying the license types of interest
-# - for the lifetime pricing analysis
 sale %>%
     left_join(lic, by = "lic_id") %>% 
     left_join(cust, by = "cust_id") %>%
@@ -35,8 +34,12 @@ sale %>%
 #>     <int>  <dbl> <int> <chr>         <int> <int>      <int>    <int>
 #> 1 1992994     64  2008 sportsman         1     1       1984        1
 #> 2 2410481     64  2008 sportsman         1     1       1946        1
+```
 
-# hunting permission history for those 100k customers
+There is also a license history table (hunting privilege) for these 100k customers.
+
+``` r
+data(hunt)
 head(hunt, 2)
 #> # A tibble: 2 x 4
 #>   cust_id  year   res age_year
@@ -127,49 +130,43 @@ retain <- yrs_calc_retain(hunt_split)
 
 p <- ggplot(retain, aes(years_since, pct)) + 
     geom_line() +
+    geom_point() +
     ggtitle("Retention for hunters aged 25 to 35")
 p
 ```
 
-![](retention_files/figure-markdown_github/unnamed-chunk-8-1.png)
+![](retention_files/figure-markdown_github/unnamed-chunk-9-1.png)
 
-The plot below demonstrates the use of multiple year zeroes with the `yrs_calc_retain()` grouping option. By default, the function will average across all available year zeroes.
+The plot below demonstrates the use of multiple year zeroes with the `yrs_calc_retain()` grouping option. By default, the function will average across all available year zeroes (like the plot above).
 
 ``` r
 retain_all <- yrs_calc_retain(hunt_split, year0)
-p + geom_point(data = retain_all)
+p + geom_point(data = retain_all, aes(color = year0))
 ```
 
-![](retention_files/figure-markdown_github/unnamed-chunk-9-1.png)
+![](retention_files/figure-markdown_github/unnamed-chunk-10-1.png)
 
 Regression Modelling
 --------------------
 
-With license data, we are faced with a limited amount of time (e.g., 10 years) for calculating retention. To extrapolate further we can use a simple regression model. A logarithmic relationship seems to provide a decent fit to the time trend.
+With license data, we are faced with a limited stretch of time (e.g., 10 years) for calculating retention. To extrapolate further we can use a simple regression model. A logarithmic relationship seems to provide a decent fit to the time trend.
 
 ``` r
 model_fit <- lm(pct ~ log(years_since), data = retain)
-model_fit
-#> 
-#> Call:
-#> lm(formula = pct ~ log(years_since), data = retain)
-#> 
-#> Coefficients:
-#>      (Intercept)  log(years_since)  
-#>          0.68169          -0.08888
+retain_predict <- data.frame(years_since = 1:34)
+retain_predict$pct <- predict(model_fit, retain_predict)
+
+ggplot(retain_predict, aes(years_since, pct)) + 
+    geom_line() +
+    geom_point(data = retain)
 ```
 
-We can then predict for future years. This is also useful because the sum of retention rates is equal to total future years over a given timeframe (34 years in this example):
+![](retention_files/figure-markdown_github/unnamed-chunk-11-1.png)
+
+The total estimated years of hunting over this 34-year period is just the sum of the predicted retention rates:
 
 ``` r
-model_predict <- data.frame(years_since = 1:34)
-model_predict$pct <- predict(model_fit, model_predict)
-tail(model_predict, 3)
-#>    years_since       pct
-#> 32          32 0.3736553
-#> 33          33 0.3709204
-#> 34          34 0.3682671
-sum(model_predict$pct)
+sum(retain_predict$pct)
 #> [1] 15.30437
 ```
 
@@ -191,7 +188,7 @@ estimate_and_plot <- function(hunt_split) {
 estimate_and_plot(hunt_split) + ggtitle("Retention curve for 30-year-old hunters")
 ```
 
-![](retention_files/figure-markdown_github/unnamed-chunk-12-1.png)
+![](retention_files/figure-markdown_github/unnamed-chunk-13-1.png)
 
 We also might be interested in focusing further. For example on residents who buy the comprehensive license; we use `yrs_lifetime_join()` to flag customers who buy that license type and then exclude customers who don't with `yrs_zero_filter()`:
 
@@ -208,4 +205,4 @@ estimate_and_plot(hunt_split) +
     ggtitle("Retention for 30-year-old resident comprehensive hunting license buyers")
 ```
 
-![](retention_files/figure-markdown_github/unnamed-chunk-13-1.png)
+![](retention_files/figure-markdown_github/unnamed-chunk-14-1.png)
