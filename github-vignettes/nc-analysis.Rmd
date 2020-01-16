@@ -1,0 +1,131 @@
+---
+output: github_document
+---
+<!-- nc-analysis.md is generated from nc-analysis.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+library(tidyverse)
+library(lifetime)
+library(DBI)
+```
+
+# NC Analysis Overview
+
+The lifetime package includes a set of wrapper functions that were used to streamline the analysis for the NC project, located on the Data Server (E:/SA/Projects/NCWRC-19-01). This vignette provides an example of estimating results for 1 of the 4 license types examined for NC (making use of data stored on the server).
+
+## Get Data
+
+Pulling license data:
+
+```{r}
+library(tidyverse)
+library(lifetime)
+library(DBI)
+
+db_license <- "E:/SA/Data-production/NCWRC-19-01/license.sqlite3"
+con <- dbConnect(RSQLite::SQLite(), db_license)
+lic <- tbl(con, "lic") %>% collect()
+sale <- tbl(con, "sale") %>% select(cust_id:year, res) %>% collect()
+hunt <- tbl(con, "hunt") %>% collect()
+dbDisconnect(con)
+```
+
+Analysis parameters:
+
+```{r}
+return_life <- 0.05 # annual return to lifetime fund
+inflation <- 0.0219 # inflation rate for fund depreciation
+ages <- 16:63 # buyer ages to be included in retention modelling
+senior_price <- 15 # lifetime license price at age 65
+
+prices <- tibble(
+    current_age = 0:63, price_lifetime = rep(250, 64), price_annual = rep(36, 64)
+)
+wsfr_amount <- 16.25 # WSFR aid per certified hunter
+min_amount <- 2 # WSFR mimimum revenue per year
+```
+
+## Prep Data
+
+The first step just involves preparing the necessary license data (oulined in the [retention vignette](retention.md)).
+
+```{r}
+df_split <- hunt %>%
+        yrs_lifetime_join(sale, lic, "comp_hunt") %>%
+        yrs_zero_split() %>%
+        yrs_zero_filter(function(x) filter(x, life_group == "comp_hunt", res == 1))
+
+glimpse(df_split$year0)
+
+glimpse(df_split$history)
+```
+
+## Calculate Retention
+
+There are wrapper functions to calculate retention across all selected ages (16-63) in the `df_split` dataset.
+
+```{r, fig.height = 3}
+observe_all <- nc_retain_all(df_split, ages, use_observed = TRUE)
+retain_all <- nc_retain_all(df_split, ages)
+retain <- nc_retain(retain_all)
+
+ggplot(retain, aes(current_age, yrs)) + 
+    geom_point() +
+    ggtitle("Estimated future participation years by age")
+```
+
+## Calculate Revenue
+
+The NC revenue calculations include a step to also estimate for those aged 0-16 (for whom we can't observe retention), although it can be overridden with `youth_ages = NULL`. Assumptions used:
+
+- Annual: Infant/youth will exactly follow the 16-year-old retention curve (starting at age 16). Before 16, licenses aren't needed.
+
+```{r}
+annual <- nc_annual(retain_all, prices, wsfr_amount, min_amount, senior_price) # include wsfr
+annual <- nc_annual(retain_all, prices, wsfr_amount = NULL) # ignore wsfr
+
+glimpse(annual)
+```
+
+- Lifetime: Infant/Youth lifetime licenses are able to compound until age 16 (before which the fund return can't be used as revenue).
+
+```{r}
+lifetime <- nc_lifetime(prices, return_life, inflation, wsfr_amount, min_amount) # include wsfr
+lifetime <- nc_lifetime(prices, return_life, inflation, wsfr_amount = NULL) # ignore wsfr
+
+glimpse(lifetime)
+```
+
+## Identify Break-even Prices
+
+A function is included which uses a solver (`stats::optimize()`) to determine the lifetime license price where Revenue|Annual ~= Revenue|Lifetime
+
+```{r}
+break_even_wsfr <- nc_break_even(
+    retain_all, prices, return_life, inflation, wsfr_amount, min_amount, senior_price
+)
+break_even <- nc_break_even(
+    retain_all, prices, return_life, inflation, wsfr_amount = NULL
+)
+
+glimpse(break_even)
+```
+
+## Identify years to Break-even
+
+The relevant wrapper function calculates revenue streams under alternative scenarios, and identifies the first year in which cumulative revenue in the lifetime scenario exceeds that of the annual scenario (if ever).
+
+```{r}
+break_even_yrs_wsfr <- nc_break_even_yrs(
+    retain_all, prices, return_life, inflation, wsfr_amount, min_amount, senior_price
+)
+break_even_yrs <- nc_break_even_yrs(
+    retain_all, prices, return_life, inflation, wsfr_amount = NULL
+)
+
+glimpse(break_even_yrs)
+```

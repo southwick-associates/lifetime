@@ -8,7 +8,7 @@ A Southwick-only R package for lifetime pricing analysis. It includes functions 
 To install package lifetime and it's dependencies from the R console:
 
 ``` r
-install.packages(c("dplyr", "ggplot2", "devtools", "mgcv", "scales", "tidyr"))
+install.packages(c("tidyverse", "devtools", "mgcv"))
 devtools::install_github("southwick-associates/lifetime")
 
 # 2 packages may  be useful for preparing license data
