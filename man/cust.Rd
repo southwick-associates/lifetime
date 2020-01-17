@@ -3,13 +3,13 @@
 \docType{data}
 \name{cust}
 \alias{cust}
-\title{Data: 100K customer sample}
-\format{data frame with 100K rows}
+\title{Data: customer sample}
+\format{data frame}
 \description{
-Data: 100K customer sample
+Data: customer sample
 }
 \seealso{
-Other Data: \code{\link{hunt}}, \code{\link{lic}},
+Other Data: \code{\link{all_sports}}, \code{\link{lic}},
   \code{\link{retain_all}}, \code{\link{retain}},
   \code{\link{sale}}
 }

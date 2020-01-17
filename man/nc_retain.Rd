@@ -32,15 +32,15 @@ Convenience functions for the NC analysis, mainly wrappers for
 \examples{
 library(dplyr)
 library(ggplot2)
-data(hunt, lic, sale)
+data(all_sports, lic, sale)
 
-hunt_split <- hunt \%>\%
+df_split <- all_sports \%>\%
     yrs_lifetime_join(sale, lic, "sportsman") \%>\%
     yrs_zero_split() \%>\%
     yrs_zero_filter(function(x) filter(x, life_group == "sportsman"))
 
-observe_all <- nc_retain_all(hunt_split, 52:58, use_observed = TRUE)
-retain_all <- nc_retain_all(hunt_split, 52:58)
+observe_all <- nc_retain_all(df_split, 52:58, use_observed = TRUE)
+retain_all <- nc_retain_all(df_split, 52:58)
 retain <- nc_retain(retain_all)
 retain \%>\%
     ggplot(aes(current_age, yrs)) +

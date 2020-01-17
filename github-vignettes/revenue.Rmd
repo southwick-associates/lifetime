@@ -12,14 +12,14 @@ library(tidyverse)
 library(lifetime)
 ```
 
-# Revenue Overview
+## Revenue Overview
 
 There are 2 revenue scenarios addressed in the lifetime package, the estimates of which determine break-even prices for lifetime licenses:
 
 - Annual: based on predicted future retention (annual license prices)
 - Lifetime: based on the return from the license price invested in a lifetime fund (with revenue produced by interest withdrawn from fund)
 
-## WSFR Aid
+### WSFR Aid
 
 Agencies also potentially receive federal aid dollars based on numbers of certified hunters/anglers. These rules generally are beneficial to the lifetime license sales scenario for a number of reasons (see `?lifetime::wsfr` for details). Agencies may or may not want to consider this revenue source in their pricing analyses.
 

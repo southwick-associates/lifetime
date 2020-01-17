@@ -9,7 +9,7 @@
 Data: Sportsman Retention years results by current & future age
 }
 \seealso{
-Other Data: \code{\link{cust}}, \code{\link{hunt}},
+Other Data: \code{\link{all_sports}}, \code{\link{cust}},
   \code{\link{lic}}, \code{\link{retain}},
   \code{\link{sale}}
 }

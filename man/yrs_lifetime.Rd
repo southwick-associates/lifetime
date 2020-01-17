@@ -37,20 +37,20 @@ library(DBI)
 library(tidyverse)
 f <- "E:/SA/Data-production/NCWRC-19-01/license.sqlite3"
 con <- dbConnect(RSQLite::SQLite(), f)
-hunt <- tbl(con, "hunt") \%>\% collect()
+all_sports <- tbl(con, "all_sports") \%>\% collect()
 lic <- tbl(con, "lic") \%>\% select(lic_id, life_group, duration) \%>\% collect()
 sale <- tbl(con, "sale") \%>\% select(lic_id, year, cust_id) \%>\% collect()
 dbDisconnect(con)
 
-hunt <- hunt \%>\%
+all_sports <- all_sports \%>\%
     yrs_avidity() \%>\%
     yrs_lifetime_join(sale, lic, "sportsman")
 
-hunt_split <- hunt \%>\%
+df_split <- all_sports \%>\%
     yrs_zero_split() \%>\%
     yrs_zero_filter(function(x) filter(x, age_year \%in\% 25:35,
                     life_group == "sportsman"))
-life_split <- yrs_lifetime_split(hunt_split)
+life_split <- yrs_lifetime_split(df_split)
 
 renew_life <- yrs_result_renew(life_split$annual, life_split$lifetime) \%>\%
     mutate(method = "renew_life")

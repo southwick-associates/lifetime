@@ -60,18 +60,18 @@ arguments are needed.
 
 \examples{
 library(dplyr)
-data(hunt)
-avg <- yrs_result_avg(hunt)
+data(all_sports)
+avg <- yrs_result_avg(all_sports)
 
-hunt_split <- hunt \%>\%
+df_split <- all_sports \%>\%
     yrs_avidity(drop_na_yrs = FALSE) \%>\%
     yrs_zero_split() \%>\%
     yrs_zero_filter(function(x) filter(x, age_year \%in\% 25:35))
 
-observe <- yrs_result_observe(hunt_split)
-retain <- yrs_result_retain(hunt_split)
-renew <- yrs_result_renew(hunt_split)
-max <- yrs_result_max(hunt_split)
+observe <- yrs_result_observe(df_split)
+retain <- yrs_result_retain(df_split)
+renew <- yrs_result_renew(df_split)
+max <- yrs_result_max(df_split)
 
 library(ggplot2)
 ggplot(observe, aes(age_year, pct, color = method)) + geom_point() +

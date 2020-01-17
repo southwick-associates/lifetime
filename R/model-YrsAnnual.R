@@ -28,8 +28,8 @@
 #' @family functions to estimate annual license buying
 #' @export
 #' @examples
-#' data(hunt)
-#' x <- yrs_avidity(hunt)
+#' data(all_sports)
+#' x <- yrs_avidity(all_sports)
 #' summary(x$num_years_held)
 yrs_avidity <- function(history, num_yrs = 3, drop_na_yrs = TRUE) {
     if ("num_years_held" %in% names(history)) {
@@ -93,27 +93,27 @@ yrs_avidity <- function(history, num_yrs = 3, drop_na_yrs = TRUE) {
 #' @name yrs_zero
 #' @examples
 #' library(dplyr)
-#' data(hunt)
+#' data(all_sports)
 #'
 #' # manually calculate retention for those aged 30-50 in 2010
 #' # - this is a bit awkward and it's easy to make a mistake
 #' #   we also need to keep in mind that only 2011-onward is relevant
-#' year0 <- filter(hunt, age_year %in% 30:50, year == 2010)
-#' hunt %>%
+#' year0 <- filter(all_sports, age_year %in% 30:50, year == 2010)
+#' all_sports %>%
 #'     semi_join(year0, by = "cust_id") %>%
 #'     count(year) %>%
 #'     mutate(retain_rate = n / max(n))
 #'
 #' # the "yrs_zero" functions make filtering more straightforward
-#' hunt_split <- yrs_zero_split(hunt) %>%
+#' df_split <- yrs_zero_split(all_sports) %>%
 #'     yrs_zero_filter(function(x) filter(x, age_year %in% 30:50, year == 2010))
-#' hunt_split$year0
-#' hunt_split$history
+#' df_split$year0
+#' df_split$history
 #'
 #' # downstream calculations are consistent, irrespective of customer filter
-#' yrs_calc_retain(hunt_split)
-#' yrs_zero_sample(hunt_split, 1000) %>% yrs_calc_retain()
-#' yrs_zero_split(hunt) %>%
+#' yrs_calc_retain(df_split)
+#' yrs_zero_sample(df_split, 1000) %>% yrs_calc_retain()
+#' yrs_zero_split(all_sports) %>%
 #'     yrs_zero_filter(function(x) filter(x, age_year %in% 25:35)) %>%
 #'     yrs_calc_retain()
 NULL
@@ -169,20 +169,20 @@ yrs_zero_sample <- function(history_split, samp_size, set_seed = TRUE) {
 #' library(tidyverse)
 #' f <- "E:/SA/Data-production/NCWRC-19-01/license.sqlite3"
 #' con <- dbConnect(RSQLite::SQLite(), f)
-#' hunt <- tbl(con, "hunt") %>% collect()
+#' all_sports <- tbl(con, "all_sports") %>% collect()
 #' lic <- tbl(con, "lic") %>% select(lic_id, life_group, duration) %>% collect()
 #' sale <- tbl(con, "sale") %>% select(lic_id, year, cust_id) %>% collect()
 #' dbDisconnect(con)
 #'
-#' hunt <- hunt %>%
+#' all_sports <- all_sports %>%
 #'     yrs_avidity() %>%
 #'     yrs_lifetime_join(sale, lic, "sportsman")
 #'
-#' hunt_split <- hunt %>%
+#' df_split <- all_sports %>%
 #'     yrs_zero_split() %>%
 #'     yrs_zero_filter(function(x) filter(x, age_year %in% 25:35,
 #'                     life_group == "sportsman"))
-#' life_split <- yrs_lifetime_split(hunt_split)
+#' life_split <- yrs_lifetime_split(df_split)
 #'
 #' renew_life <- yrs_result_renew(life_split$annual, life_split$lifetime) %>%
 #'     mutate(method = "renew_life")
@@ -244,16 +244,16 @@ yrs_lifetime_split <- function(history_split) {
 #' @name yrs_calc
 #' @examples
 #' library(dplyr)
-#' data(hunt)
-#' hunt_split <- yrs_zero_split(hunt) %>%
+#' data(all_sports)
+#' df_split <- yrs_zero_split(all_sports) %>%
 #'    yrs_zero_filter(function(x) filter(x, age_year %in% 30:50))
 #'
-#' yrs_calc_renew_one(hunt_split, 2008)
-#' yrs_calc_renew(hunt_split)
-#' yrs_calc_retain(hunt_split)
+#' yrs_calc_renew_one(df_split, 2008)
+#' yrs_calc_renew(df_split)
+#' yrs_calc_retain(df_split)
 #'
 #' library(ggplot2)
-#' retain <- yrs_calc_retain(hunt_split, year0)
+#' retain <- yrs_calc_retain(df_split, year0)
 #' ggplot(retain, aes(years_since, pct, color = year0, size = n0)) +
 #'     geom_point() +
 #'     ggtitle("We see some variation in retention curves depending on year zero",
@@ -346,8 +346,8 @@ yrs_calc_retain <- function(history_split, ...) {
 #' @family functions to estimate annual license buying
 #' @export
 #' @examples
-#' data(hunt)
-#' yrs_calc_avg(hunt)
+#' data(all_sports)
+#' yrs_calc_avg(all_sports)
 yrs_calc_avg <- function(
     history, ..., yrs = NULL, ages = 16:64,
     age_cohort = function(x) {
@@ -402,15 +402,15 @@ yrs_calc_avg <- function(
 #' @name yrs_fit
 #' @examples
 #' library(dplyr)
-#' data(hunt)
-#' hunt <- yrs_avidity(hunt, drop_na_yrs = FALSE)
-#' hunt_split <- yrs_zero_split(hunt) %>%
+#' data(all_sports)
+#' all_sports <- yrs_avidity(all_sports, drop_na_yrs = FALSE)
+#' df_split <- yrs_zero_split(all_sports) %>%
 #'     yrs_zero_filter(function(x) filter(x, age_year == 30))
 #'
-#' train_df <- yrs_calc_renew(hunt_split)
+#' train_df <- yrs_calc_renew(df_split)
 #' yrs_fit_renew(train_df)
 #'
-#' train_df <- yrs_calc_retain(hunt_split)
+#' train_df <- yrs_calc_retain(df_split)
 #' yrs_fit_retain(train_df)
 #' yrs_fit_retain_gam(train_df)
 NULL
@@ -477,24 +477,24 @@ yrs_fit_retain_gam <- function(
 #' @examples
 #' library(dplyr)
 #' library(ggplot2)
-#' data(hunt)
+#' data(all_sports)
 #'
-#' hunt_split <- hunt %>%
+#' df_split <- all_sports %>%
 #'     yrs_avidity() %>%
 #'     yrs_zero_split() %>%
 #'     yrs_zero_filter(function(x) filter(x, age_year %in% 30:50))
 #'
 #' # log trend fit of retention rates
-#' train_df <- yrs_calc_retain(hunt_split)
+#' train_df <- yrs_calc_retain(df_split)
 #' model_fit <- yrs_fit_retain(train_df)
 #' out <- yrs_predict_retain(data.frame(years_since = 1:40), model_fit)
 #' sum(out$pct) # estimated annual license purchases over 40 years
 #' ggplot(out, aes(years_since, pct)) + geom_line() + geom_point(data = train_df)
 #'
 #' # logistic regression based on individual-level renewal
-#' train_df2 <- yrs_calc_renew(hunt_split)
+#' train_df2 <- yrs_calc_renew(df_split)
 #' model_fit2 <- yrs_fit_renew(train_df2)
-#' predict_df2 <- filter(hunt_split$year0, year == 2011) %>% select(num_years_held)
+#' predict_df2 <- filter(df_split$year0, year == 2011) %>% select(num_years_held)
 #' out2 <- 1:40 %>%
 #'     sapply(function(i) mutate(predict_df2, years_since = i), simplify = FALSE) %>%
 #'     bind_rows() %>%
@@ -540,8 +540,8 @@ yrs_predict_renew <- function(predict_df, model_fit, method = "renew") {
 #' @family functions to estimate annual license buying
 #' @export
 #' @examples
-#' data(hunt)
-#' x <- yrs_calc_avg(hunt)
+#' data(all_sports)
+#' x <- yrs_calc_avg(all_sports)
 #' yrs_predict_avg(x)
 yrs_predict_avg <- function(
     avg_yrs, ..., num_yrs = 5,
@@ -584,18 +584,18 @@ yrs_predict_avg <- function(
 #' @name yrs_result
 #' @examples
 #' library(dplyr)
-#' data(hunt)
-#' avg <- yrs_result_avg(hunt)
+#' data(all_sports)
+#' avg <- yrs_result_avg(all_sports)
 #'
-#' hunt_split <- hunt %>%
+#' df_split <- all_sports %>%
 #'     yrs_avidity(drop_na_yrs = FALSE) %>%
 #'     yrs_zero_split() %>%
 #'     yrs_zero_filter(function(x) filter(x, age_year %in% 25:35))
 #'
-#' observe <- yrs_result_observe(hunt_split)
-#' retain <- yrs_result_retain(hunt_split)
-#' renew <- yrs_result_renew(hunt_split)
-#' max <- yrs_result_max(hunt_split)
+#' observe <- yrs_result_observe(df_split)
+#' retain <- yrs_result_retain(df_split)
+#' renew <- yrs_result_renew(df_split)
+#' max <- yrs_result_max(df_split)
 #'
 #' library(ggplot2)
 #' ggplot(observe, aes(age_year, pct, color = method)) + geom_point() +
@@ -722,26 +722,26 @@ yrs_result_avg <- function(history, predict_age = 30, end_age = 64) {
 #' library(dplyr)
 #' library(ggplot2)
 #'
-#' data(hunt)
-#' avg <- yrs_result_avg(hunt)
+#' data(all_sports)
+#' avg <- yrs_result_avg(all_sports)
 #'
-#' hunt_split <- hunt %>%
+#' df_split <- all_sports %>%
 #'     yrs_avidity(drop_na_yrs = FALSE) %>%
 #'     yrs_zero_split() %>%
 #'     yrs_zero_filter(function(x) filter(x, age_year %in% 25:35))
 #'
 #' # comparing retention-based vs avg-years-based methods
-#' observe <- yrs_result_observe(hunt_split)
-#' retain <- yrs_result_retain(hunt_split)
-#' max <- yrs_result_max(hunt_split)
+#' observe <- yrs_result_observe(df_split)
+#' retain <- yrs_result_retain(df_split)
+#' max <- yrs_result_max(df_split)
 #' bind_rows(retain, max, avg) %>% yrs_plot() + geom_point(data = observe)
 #'
 #' # comparing retain & renew methods
-#' renew <- yrs_result_renew(hunt_split)
+#' renew <- yrs_result_renew(df_split)
 #' bind_rows(retain, renew) %>% yrs_plot() + geom_point(data = observe)
 #'
 #' # using a GAM for retain
-#' retain <- hunt_split %>%
+#' retain <- df_split %>%
 #'     yrs_result_retain(model = function(x) yrs_fit_retain_gam(x))
 #' bind_rows(retain, max, avg) %>% yrs_plot() + geom_point(data = observe)
 yrs_plot <- function(

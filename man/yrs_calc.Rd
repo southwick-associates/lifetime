@@ -45,16 +45,16 @@ years.
 
 \examples{
 library(dplyr)
-data(hunt)
-hunt_split <- yrs_zero_split(hunt) \%>\%
+data(all_sports)
+df_split <- yrs_zero_split(all_sports) \%>\%
    yrs_zero_filter(function(x) filter(x, age_year \%in\% 30:50))
 
-yrs_calc_renew_one(hunt_split, 2008)
-yrs_calc_renew(hunt_split)
-yrs_calc_retain(hunt_split)
+yrs_calc_renew_one(df_split, 2008)
+yrs_calc_renew(df_split)
+yrs_calc_retain(df_split)
 
 library(ggplot2)
-retain <- yrs_calc_retain(hunt_split, year0)
+retain <- yrs_calc_retain(df_split, year0)
 ggplot(retain, aes(years_since, pct, color = year0, size = n0)) +
     geom_point() +
     ggtitle("We see some variation in retention curves depending on year zero",

@@ -54,27 +54,27 @@ has been run.
 
 \examples{
 library(dplyr)
-data(hunt)
+data(all_sports)
 
 # manually calculate retention for those aged 30-50 in 2010
 # - this is a bit awkward and it's easy to make a mistake
 #   we also need to keep in mind that only 2011-onward is relevant
-year0 <- filter(hunt, age_year \%in\% 30:50, year == 2010)
-hunt \%>\%
+year0 <- filter(all_sports, age_year \%in\% 30:50, year == 2010)
+all_sports \%>\%
     semi_join(year0, by = "cust_id") \%>\%
     count(year) \%>\%
     mutate(retain_rate = n / max(n))
 
 # the "yrs_zero" functions make filtering more straightforward
-hunt_split <- yrs_zero_split(hunt) \%>\%
+df_split <- yrs_zero_split(all_sports) \%>\%
     yrs_zero_filter(function(x) filter(x, age_year \%in\% 30:50, year == 2010))
-hunt_split$year0
-hunt_split$history
+df_split$year0
+df_split$history
 
 # downstream calculations are consistent, irrespective of customer filter
-yrs_calc_retain(hunt_split)
-yrs_zero_sample(hunt_split, 1000) \%>\% yrs_calc_retain()
-yrs_zero_split(hunt) \%>\%
+yrs_calc_retain(df_split)
+yrs_zero_sample(df_split, 1000) \%>\% yrs_calc_retain()
+yrs_zero_split(all_sports) \%>\%
     yrs_zero_filter(function(x) filter(x, age_year \%in\% 25:35)) \%>\%
     yrs_calc_retain()
 }

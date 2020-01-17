@@ -25,26 +25,26 @@ of \code{\link{yrs_result}} and plots with some useful labelling and scaling.
 library(dplyr)
 library(ggplot2)
 
-data(hunt)
-avg <- yrs_result_avg(hunt)
+data(all_sports)
+avg <- yrs_result_avg(all_sports)
 
-hunt_split <- hunt \%>\%
+df_split <- all_sports \%>\%
     yrs_avidity(drop_na_yrs = FALSE) \%>\%
     yrs_zero_split() \%>\%
     yrs_zero_filter(function(x) filter(x, age_year \%in\% 25:35))
 
 # comparing retention-based vs avg-years-based methods
-observe <- yrs_result_observe(hunt_split)
-retain <- yrs_result_retain(hunt_split)
-max <- yrs_result_max(hunt_split)
+observe <- yrs_result_observe(df_split)
+retain <- yrs_result_retain(df_split)
+max <- yrs_result_max(df_split)
 bind_rows(retain, max, avg) \%>\% yrs_plot() + geom_point(data = observe)
 
 # comparing retain & renew methods
-renew <- yrs_result_renew(hunt_split)
+renew <- yrs_result_renew(df_split)
 bind_rows(retain, renew) \%>\% yrs_plot() + geom_point(data = observe)
 
 # using a GAM for retain
-retain <- hunt_split \%>\%
+retain <- df_split \%>\%
     yrs_result_retain(model = function(x) yrs_fit_retain_gam(x))
 bind_rows(retain, max, avg) \%>\% yrs_plot() + geom_point(data = observe)
 }

@@ -31,24 +31,24 @@ model fit.
 \examples{
 library(dplyr)
 library(ggplot2)
-data(hunt)
+data(all_sports)
 
-hunt_split <- hunt \%>\%
+df_split <- all_sports \%>\%
     yrs_avidity() \%>\%
     yrs_zero_split() \%>\%
     yrs_zero_filter(function(x) filter(x, age_year \%in\% 30:50))
 
 # log trend fit of retention rates
-train_df <- yrs_calc_retain(hunt_split)
+train_df <- yrs_calc_retain(df_split)
 model_fit <- yrs_fit_retain(train_df)
 out <- yrs_predict_retain(data.frame(years_since = 1:40), model_fit)
 sum(out$pct) # estimated annual license purchases over 40 years
 ggplot(out, aes(years_since, pct)) + geom_line() + geom_point(data = train_df)
 
 # logistic regression based on individual-level renewal
-train_df2 <- yrs_calc_renew(hunt_split)
+train_df2 <- yrs_calc_renew(df_split)
 model_fit2 <- yrs_fit_renew(train_df2)
-predict_df2 <- filter(hunt_split$year0, year == 2011) \%>\% select(num_years_held)
+predict_df2 <- filter(df_split$year0, year == 2011) \%>\% select(num_years_held)
 out2 <- 1:40 \%>\%
     sapply(function(i) mutate(predict_df2, years_since = i), simplify = FALSE) \%>\%
     bind_rows() \%>\%

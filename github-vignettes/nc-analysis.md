@@ -1,7 +1,7 @@
 
 <!-- nc-analysis.md is generated from nc-analysis.Rmd. Please edit that file -->
 NC Analysis Overview
-====================
+--------------------
 
 The lifetime package includes a set of wrapper functions that were used to streamline the analysis for the NC project, located on the Data Server (E:/SA/Projects/NCWRC-19-01). This vignette provides an example of estimating results for 1 of the 4 license types examined for NC (making use of data stored on the server).
 

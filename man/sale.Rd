@@ -3,13 +3,13 @@
 \docType{data}
 \name{sale}
 \alias{sale}
-\title{Data: hunting sales for license types of interest in sample}
+\title{Data: sportsman sales for license types of interest in sample}
 \format{data frame}
 \description{
-Data: hunting sales for license types of interest in sample
+Data: sportsman sales for license types of interest in sample
 }
 \seealso{
-Other Data: \code{\link{cust}}, \code{\link{hunt}},
+Other Data: \code{\link{all_sports}}, \code{\link{cust}},
   \code{\link{lic}}, \code{\link{retain_all}},
   \code{\link{retain}}
 }

@@ -3,13 +3,13 @@
 \docType{data}
 \name{lic}
 \alias{lic}
-\title{Data: license types of interest for analysis}
+\title{Data: sportsman license types}
 \format{data frame}
 \description{
-Data: license types of interest for analysis
+Data: sportsman license types
 }
 \seealso{
-Other Data: \code{\link{cust}}, \code{\link{hunt}},
+Other Data: \code{\link{all_sports}}, \code{\link{cust}},
   \code{\link{retain_all}}, \code{\link{retain}},
   \code{\link{sale}}
 }

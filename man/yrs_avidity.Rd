@@ -18,8 +18,8 @@ be calculated will be dropped (e.g., drops first 3 years by default)}
 Avidity is based on years of license purchases prior to the current year.
 }
 \examples{
-data(hunt)
-x <- yrs_avidity(hunt)
+data(all_sports)
+x <- yrs_avidity(all_sports)
 summary(x$num_years_held)
 }
 \seealso{

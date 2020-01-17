@@ -29,8 +29,8 @@ To be run following \code{\link{yrs_calc_avg}}. Converts the output of that
 function to a scale comparable to a retention curve
 }
 \examples{
-data(hunt)
-x <- yrs_calc_avg(hunt)
+data(all_sports)
+x <- yrs_calc_avg(all_sports)
 yrs_predict_avg(x)
 }
 \seealso{

@@ -28,8 +28,8 @@ average number of years (by cohort) that sportspersons held a license, condition
 on having held a license in at least one of the selected years.
 }
 \examples{
-data(hunt)
-yrs_calc_avg(hunt)
+data(all_sports)
+yrs_calc_avg(all_sports)
 }
 \seealso{
 Other functions to estimate annual license buying: \code{\link{yrs_avidity}},

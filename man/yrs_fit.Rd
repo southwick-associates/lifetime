@@ -41,15 +41,15 @@ Convenience functions for running a model using selected defaults.
 
 \examples{
 library(dplyr)
-data(hunt)
-hunt <- yrs_avidity(hunt, drop_na_yrs = FALSE)
-hunt_split <- yrs_zero_split(hunt) \%>\%
+data(all_sports)
+all_sports <- yrs_avidity(all_sports, drop_na_yrs = FALSE)
+df_split <- yrs_zero_split(all_sports) \%>\%
     yrs_zero_filter(function(x) filter(x, age_year == 30))
 
-train_df <- yrs_calc_renew(hunt_split)
+train_df <- yrs_calc_renew(df_split)
 yrs_fit_renew(train_df)
 
-train_df <- yrs_calc_retain(hunt_split)
+train_df <- yrs_calc_retain(df_split)
 yrs_fit_retain(train_df)
 yrs_fit_retain_gam(train_df)
 }
