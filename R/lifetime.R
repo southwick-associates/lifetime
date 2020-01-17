@@ -15,56 +15,44 @@ if (getRversion() >= "2.15.1") {
     )
 }
 
-#' Data: 100K customer sample
+#' lifetime: Lifetime pricing analysis
 #'
-#' @docType data
-#' @keywords datasets
-#' @name cust
-#' @format data frame with 100K rows
-#' @family Data
-NULL
-
-#' Data: hunt history from 100K customer sample
+#' See below for a list of the core functions. Vignettes are available on
+#' github: \url{https://github.com/southwick-associates/lifetime}
 #'
-#' @docType data
-#' @keywords datasets
-#' @name hunt
-#' @format data frame
-#' @family Data
-NULL
-
-#' Data: license types of interest for analysis
+#' @section Retention:
+#' \itemize{
+#'   \item Data Prep: \code{\link{yrs_zero_split}}, \code{\link{yrs_zero_filter}},
+#'   \code{\link{yrs_lifetime_join}}, \code{\link{yrs_avidity}}
 #'
-#' @docType data
-#' @keywords datasets
-#' @name lic
-#' @format data frame
-#' @family Data
-NULL
-
-#' Data: hunting sales for license types of interest in sample
+#'   \item OLS Time-trend Model: \code{\link{yrs_calc_retain}},
+#'   \code{\link{yrs_result_observe}}, \code{\link{yrs_result_retain}}
 #'
-#' @docType data
-#' @keywords datasets
-#' @name sale
-#' @format data frame
-#' @family Data
-NULL
-
-#' Data: Sportsman Retention years results by age
+#'   \item Logistic Model: \code{\link{yrs_calc_renew}},
+#'   \code{\link{yrs_result_renew}}
+#' }
 #'
-#' @docType data
-#' @keywords datasets
-#' @name retain
-#' @format data frame
-#' @family Data
-NULL
-
-#' Data: Sportsman Retention years results by current & future age
+#' @section Revenue:
+#' \itemize{
+#'   \item License: \code{\link{lic_annual_stream}}, \code{\link{lic_lifetime_stream}},
+#'   \code{\link{lic_lifetime}}
 #'
-#' @docType data
-#' @keywords datasets
-#' @name retain_all
-#' @format data frame
-#' @family Data
+#'   \item WSFR: \code{\link{wsfr_annual_stream}}, \code{\link{wsfr_lifetime_stream}}
+#'
+#'   \item Lifetime Fund: \code{\link{compound_interest}}, \code{\link{present_value_stream}}
+#' }
+#'
+#' @section NC Analysis:
+#' \itemize{
+#'   \item Retention: \code{\link{nc_retain_all}}, \code{\link{nc_retain_youth}}
+#'
+#'   \item Revenue: \code{\link{nc_annual_stream}}, \code{\link{nc_lifetime}},
+#'   \code{\link{nc_lifetime_stream}}, \code{\link{nc_price_lifetime_youth}}
+#'
+#'   \item Break-even: \code{\link{nc_break_even}},
+#'   \code{\link{nc_break_even_yrs}}
+#' }
+#'
+#' @docType package
+#' @name lifetime
 NULL
