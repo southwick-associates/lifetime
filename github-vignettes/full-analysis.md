@@ -1,9 +1,9 @@
 
-<!-- nc-analysis.md is generated from nc-analysis.Rmd. Please edit that file -->
-NC Analysis Overview
---------------------
+<!-- full-analysis.md is generated from full-analysis.Rmd. Please edit that file -->
+Full Analysis Overview
+----------------------
 
-The lifetime package includes a set of wrapper functions that were used to streamline the analysis for the NC project, located on the Data Server (E:/SA/Projects/NCWRC-19-01). This vignette provides an example of estimating results for 1 of the 4 license types examined for NC (making use of data stored on the server).
+The lifetime package includes a set of wrapper functions that were used to streamline the analysis for a reference project. This vignette provides an example of estimating results for 1 of the 4 license types examined.
 
 Get Data
 --------
@@ -15,6 +15,7 @@ library(tidyverse)
 library(lifetime)
 library(DBI)
 
+# data server
 db_license <- "E:/SA/Data-production/NCWRC-19-01/license.sqlite3"
 con <- dbConnect(RSQLite::SQLite(), db_license)
 lic <- tbl(con, "lic") %>% collect()
@@ -84,7 +85,7 @@ filter(retain_all, current_age %in% c(20, 30, 40), years_since > 0) %>%
     ggtitle("Retention Curves for select ages")
 ```
 
-![](nc-analysis_files/figure-markdown_github/unnamed-chunk-5-1.png)
+![](full-analysis_files/figure-markdown_github/unnamed-chunk-5-1.png)
 
 ``` r
 retain <- nc_retain(retain_all)
@@ -94,7 +95,7 @@ ggplot(retain, aes(current_age, yrs)) +
     ggtitle("Estimated future participation years by age")
 ```
 
-![](nc-analysis_files/figure-markdown_github/unnamed-chunk-6-1.png)
+![](full-analysis_files/figure-markdown_github/unnamed-chunk-6-1.png)
 
 Calculate Revenue
 -----------------

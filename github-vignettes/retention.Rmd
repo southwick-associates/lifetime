@@ -18,7 +18,7 @@ Estimating revenue in the annual purchase scenario fundamentally depends upon pr
 
 ### Retention Curves
 
-Retention curves can be constructed from observed retention rates, and these always slope downward. The example below is pulled from the NC report Appendix, and uses linear regression fit to 10 years of observed retention rates for hunters aged 45 in year zero. This vignette walks through the R functions used to estimate such retention curves.
+Retention curves can be constructed from observed retention rates, and these always slope downward. The example below is pulled from the reference report Appendix, and uses linear regression fit to 10 years of observed retention rates for select customers. This vignette walks through the R functions used to estimate such retention curves.
 
 ![](figures/appendix-retention.png)
 
